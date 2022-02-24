@@ -1,0 +1,1 @@
+Needed to create data directory for file structure to work with Python Script that creates database files in here.
