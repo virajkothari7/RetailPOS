@@ -1,25 +1,31 @@
 Image Credits:
-    Pixabay:
-        https://pixabay.com/vectors/cash-register-register-retail-store-576159/
-        https://pixabay.com/vectors/clock-time-time-display-icon-1032653/
-        https://pixabay.com/illustrations/computer-science-management-icon-1331580/
-        https://pixabay.com/illustrations/finance-business-calculator-2751890/
-        https://pixabay.com/illustrations/monitor-isolated-display-white-313011/
-        https://pixabay.com/vectors/pack-box-cardboard-box-cardboard-148427/
-        https://pixabay.com/vectors/register-cash-register-modern-23666/
-        https://pixabay.com/vectors/screen-capture-screenshot-app-23236/
+    
+        Pixabay:
+            https://pixabay.com/vectors/cash-register-register-retail-store-576159/ 
+            https://pixabay.com/vectors/clock-time-time-display-icon-1032653/ 
+            https://pixabay.com/illustrations/computer-science-management-icon-1331580/ 
+            https://pixabay.com/illustrations/finance-business-calculator-2751890/ 
+            https://pixabay.com/illustrations/monitor-isolated-display-white-313011/ 
+            https://pixabay.com/vectors/pack-box-cardboard-box-cardboard-148427/ 
+            https://pixabay.com/vectors/register-cash-register-modern-23666/ 
+            https://pixabay.com/vectors/screen-capture-screenshot-app-23236/ 
 
-
+<br>
 Community Credits:
-    Python Community, Stack Exchange Community, Devlopers Community, Kivy and KivyMD Community
+
+    Python Community,
+    Stack Exchange Community,
+    Devlopers Community, 
+    Kivy and KivyMD Community
     
     GitHub Project:
         Author : neesarg123
         Repo. Name : PocketBiz
         GitHub Link : https://github.com/neesarg123/PocketBiz        
 
-
+<br>
 Technologies and Packages:
+
     Kivy
     KivyMD
     Python
@@ -32,20 +38,4 @@ Technologies and Packages:
     python_escpos==3.0a8
     pyusb==1.2.1
 
-
-# Raspberry Commands IF you would like to give it a try.
-# 
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install libusb-1.0-0-dev
-sudo apt install python3-setuptools git-core python3-dev
-
-sudo apt install pkg-config libgl1-mesa-dev libgles2-mesa-dev	libgstreamer1.0-dev	gstreamer1.0-plugins-{bad, base, good, ugly}	gstreamer1.0-{omx,alsa} libmtdev-dev	xclip xsel libjpeg-dev
-[If above code gives error don't worry just run code below]
-
-sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
-sudo pip install -r requirements.txt
-sudo python main.py
-  
-     
 
