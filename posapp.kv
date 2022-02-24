@@ -1,0 +1,613 @@
+# pos.kv 
+#:import sm kivy.uix.screenmanager
+#:import MDDialog kivymd.uix.dialog.MDDialog
+#:import Button kivy.uix.button.Button
+
+<loginShift>:
+    name : "login_shift"
+
+    Image:
+        source : "./images/cash-register-g87e120a86_640.png"
+        pos_hint : {"x":0,"y":0}
+        size_hint : 0.5, 0.8
+    
+    MDLabel:
+        text :" Retail-POS  System "
+        halign : "center"
+        text_color:[1,1,1,1]
+        theme_text_color:"Custom"
+        size_hint: 1 , 0.2
+        pos_hint : {"x":0,"y":0.8}  
+        md_bg_color : [0.128,0.128,0.128,1]
+        font_style: "H3"
+
+    MDLabel:
+        text :"Enter Name for the SHIFT ;"
+        size_hint: 0.4 , 0.125
+        pos_hint : {"x":0.6,"y":0.55}  
+        font_style: "H4"
+
+    MDTextField:
+        id : shiftNames
+        hint_text: " Enter Names Here... "
+        size_hint: 0.3 , 0.15
+        pos_hint : {"x":0.625,"y":0.325}  
+        md_bg_color : [0.128,0.128,0.128,1]
+        font_size: 48
+        mode : "fill"
+        on_text_validate : root.startShift()
+
+    Button:
+        pos_hint:{"x":0.6,"y":0.125}
+        size_hint: 0.35, 0.15
+        text: "[b]START SHIFT[/b]"
+        markup : True
+        background_color : [0.128,0.128,0.128,1]
+        font_size : 58
+        on_press: root.startShift()
+        
+    
+<MainScreen>:
+    name: "main"
+
+    canvas.before:
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            source: './images/monitor-313011_1920.jpg'
+
+    FloatLayout:
+        
+        cols : 1
+        size: dp(root.width), dp(root.height)
+        FloatLayout:
+            MDRaisedButton:
+                md_bg_color: [0.128,0.128,0.128,1]
+                pos_hint:{"x":0.375,"y":0.4}
+                size_hint: 0.25, 0.375
+                on_press:
+                    app.root.current = "retail"
+                MDGridLayout:
+                    cols :1
+                    spacing : 10
+                    padding : [20,50,20,20]
+                    Image:
+                        source : "./images/register-gc32b1b368_640.png"
+                    Label:
+                        text : "Retail POS-Screen"
+                        font_size : dp((root.width**2 + root.height**2)**0.25/2.5)
+            
+            MDRaisedButton:
+                md_bg_color: [0.128,0.128,0.128,1]
+                pos_hint:{"x":0.6625,"y":0.645}
+                size_hint: 0.2, 0.2
+                on_press:
+                    app.root.current = "inventory"
+                MDGridLayout:
+                    cols :1
+                    padding : [20,50,20,20]
+                    Image:
+                        source : "./images/pack-g5787531aa_640.png"
+                    Label:
+                        text: "Inventory"
+                        font_size : dp((root.width**2 + root.height**2)**0.25/2.5)
+            
+            MDRaisedButton:
+                md_bg_color: [0.128,0.128,0.128,1]
+                pos_hint:{"x":0.6625,"y":0.375}
+                size_hint: 0.2, 0.2
+                on_press:
+                    app.root.current = "reports"
+                MDGridLayout:
+                    cols :1
+                    padding : [20,50,20,20]
+                    Image:
+                        source : "./images/finance-gac841eb70_640.png"
+                    Label:
+                        text: "Reports"
+                        font_size : dp((root.width**2 + root.height**2)**0.25/2.5)
+            
+            MDRaisedButton:
+                halign : "right"
+                pos_hint:{"x":0.025,"y":0.045}
+                size_hint: 0.285, 0.15
+                text: "Store Information"
+                font_style: "H6"
+                md_bg_color: [0.128,0.128,0.128,1]
+                on_press: 
+                    app.root.current = "storeinformation"
+
+            MDRaisedButton:
+                halign : "right"
+                pos_hint:{"x":0.7,"y":0.045}
+                size_hint: 0.275, 0.15
+                text: "Settings"
+                font_style: "H6"
+                md_bg_color: [0.128,0.128,0.128,1]
+                on_press: 
+                    app.root.current = "settings"
+
+
+<InventoryScreen>:
+    name : "inventory"
+
+    MDToolbar:
+        title:" Inventory "
+        anchor_title: "center"
+        size_hint: 1 , 0.135 
+        md_bg_color: [0.128,0.128,0.128,1]
+        pos_hint : {"x":0,"y":0.865}
+        
+
+<ReportsScreen>:
+    name : "reports"
+    
+    MDSpinner:
+        id : spinner
+        size_hint: None, None
+        size: dp(46), dp(46)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        active: False
+
+    MDToolbar:
+        title:" Reports "
+        anchor_title: "center"
+        size_hint: 1 , 0.135 
+        md_bg_color: [0.128,0.128,0.128,1]
+        pos_hint : {"x":0,"y":0.865}
+
+
+    MDGridLayout:
+        cols: 5
+        pos_hint: {"x":0.15,"y":0}
+        size_hint : 0.85,0.125
+        orientation: "lr-tb" 
+        row_force_default :True
+        row_default_height: root.height*0.125
+
+        BaseButton:
+            text: "[b]Shift[/b]"
+            id : shiftReports
+            markup : True
+            size_hint : 1,1
+            theme_text_color : "Custom"
+            text_color : [1,1,1,1]
+            md_bg_color: [0.128,0.128,0.128,1]
+            font_style : "H6"
+            anchor_x : "center"
+            on_press : root.shiftlayout()
+        
+        BaseButton:
+            text: "[b]Daily[/b]"
+            id : dateReports
+            markup : True
+            size_hint : 1,1
+            theme_text_color : "Custom"
+            text_color : [1,1,1,1]
+            md_bg_color: [0.128,0.128,0.128,1]
+            font_style : "H6"
+            anchor_x : "center"
+            on_press : root.daylayout()
+
+        BaseButton:
+            text: "[b]Department[/b]"
+            markup : True
+            id : departmentReports
+            size_hint : 1,1
+            theme_text_color : "Custom"
+            text_color : [1,1,1,1]
+            md_bg_color: [0.128,0.128,0.128,1]
+            font_style : "H6"
+            anchor_x : "center"
+            on_press : root.transactionslayoutRange("Clear",None,None,layoutName="department")
+
+        BaseButton:
+            text: "[b]Products[/b]"
+            markup : True
+            id : productReports
+            size_hint : 1,1
+            theme_text_color : "Custom"
+            text_color : [1,1,1,1]
+            md_bg_color: [0.128,0.128,0.128,1]
+            font_style : "H6"
+            anchor_x : "center"
+            on_press : root.transactionslayoutRange("Clear",None,None,layoutName="products")
+
+        BaseButton:
+            text: "[b]All Transaction[/b]"
+            markup : True
+            id : allTransactions
+            size_hint : 1,1
+            theme_text_color : "Custom"
+            text_color : [1,1,1,1]
+            md_bg_color: [0.128,0.128,0.128,1]
+            font_style : "H6"
+            anchor_x : "center"
+            on_press : root.transactionslayoutRange("Clear",None,None,layoutName="transaction")
+
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.15, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : ((root.width**2 + root.height**2) / 17**4)
+        on_release: 
+            app.root.current = "main"
+
+
+<RetailScreen>:
+    name : "retail"
+
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.125, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : ((root.width**2 + root.height**2) / 17**4)
+        on_release: 
+            app.root.current = "main"
+    
+    MDIcon:
+        icon : "custom"
+        source: "./images/clock-g538c12792_640.png"
+        pos_hint : {"center_x":0.155,"center_y":0.95}
+        size_hint : [0.06 , 0.1 ]
+        md_bg_color:[0.128,0.128,0.128,0.25]
+
+    MDLabel:
+        id : clock
+        text: ""
+        pos_hint : {"x":0.185,"y":0.9}
+        size_hint : [0.12 , 0.1 ]
+        markup: True
+        font_style: "H6"
+        halign: "center"
+        # text_color:[1,1,1,1]
+        theme_text_color:"Primary"
+        md_bg_color:[0.128,0.128,0.128,0.25]
+        
+
+<CashOutScreen>:
+    name : "cashout"
+    
+    Label:
+        text: "Cash/Pay Out"
+
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.15, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : (root.width**2 + root.height**2) / 16.5**4
+        on_release: 
+            app.root.current = "main"
+
+
+<NumPad>:
+    MDLabel:
+        text: "Please use on-screen key-pad"
+        font_style:"Subtitle2"
+        size_hint : 1,0.025
+        
+    MDLabel:
+        id : textField
+        text: ""
+        halign:"right"
+        font_style:"H5"
+        size_hint : 1,0.15
+        padding : ["10sp","50sp"]
+        md_bg_color: [0.128,0.128,0.128,0.25] 
+
+
+<buttonSettings>:
+    name : "buttons"
+    MDLabel:
+        pos_hint : {"x":0.149,"y":0}
+        size_hint:  0.86,  0.125
+        halign : "center"
+        text: "Quick Add Settings"
+        font_style: "H4"
+        md_bg_color: [0.120,0.120,0.120,0.35] 
+
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.15, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : (root.width**2 + root.height**2) / 16.5**4
+        on_release: 
+            app.root.current = "retail"
+
+
+<retailTransactions>:
+    name : "retail_transactions"
+    
+    MDToolbar:
+        title:" Transactions     (Recent 1000 Transaction)"
+        anchor_title: "center"
+        size_hint: 1 , 0.1 
+        pos_hint : {"x":0,"y":0.9}  
+        md_bg_color: [0.128,0.128,0.128,1]
+    
+    ScrollView:
+        size_hint : [None,None]
+        do_scroll_x : False
+        size : (root.width*0.44, root.height*0.575) 
+        pos_hint: {'x':0.035,'y':0.175}
+        bar_width: '12px'
+        scroll_type : ["bars", "content"]
+        
+        MDLabel:
+            id : reciept
+            text:""
+            size_hint:[0.98,None]
+            padding:[100,50]
+            size: self.texture_size 
+            md_bg_color: [0.128,0.128,0.128,0.15]
+
+    MDFillRoundFlatButton:
+        id : printReciept 
+        size_hint : [0.2,0.125]
+        pos_hint: {'x':0.25,'y':0.025}
+        text : "Print Reciept"
+        font_size : (root.width**2 + root.height**2) / 17**4
+        
+
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.15, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : (root.width**2 + root.height**2) / 16.5**4
+        on_release: 
+            app.root.current = "retail"
+
+
+<receiptScreen>:
+    
+    MDLabel:
+        text:"Transaction Reciept"
+        size_hint:[0.45,0.1]
+        pos_hint: {"x":0,"y":0.9}
+        padding:[50,30]
+        font_style:"H5"
+        halign:"center"
+
+    MDLabel:
+        text:"Detailed Transaction"
+        size_hint:[0.45,0.1]
+        pos_hint: {"x":0.5,"y":0.9}
+        padding:[50,30]
+        font_style:"H5"
+        halign:"center"
+
+    MDLabel:
+        text:"If Printer is Connected and Not-Printing, Try Re-Print from Retail POS-Screen and Come back to Print"
+        size_hint:[0.85,0.05]
+        pos_hint: {"x":0.15,"y":0}
+        padding:[30,10]
+        halign:"center"
+        md_bg_color : [1,0,0,0.5]
+
+    ScrollView:
+        size_hint : [None,None]
+        do_scroll_x : False
+        size : (root.width*0.5, root.height*0.675) 
+        pos_hint: {"x":0,"y":0.225}
+        bar_width: '12px'
+        scroll_type : ["bars", "content"]
+        
+        MDLabel:
+            id: recieptScreen
+            text:""
+            size_hint:[0.98,None]
+            padding:[100,50]
+            font_style:"H6"
+            size: self.texture_size 
+            md_bg_color: [0.128,0.128,0.128,0.15]
+    
+    ScrollView:
+        size_hint : [None,None]
+        do_scroll_x : False
+        size : (root.width*0.5, root.height*0.675) 
+        pos_hint: {"x":0.5,"y":0.225}
+        bar_width: '12px'
+        scroll_type : ["bars", "content"]
+        
+        MDLabel:
+            id: recieptScreenProd
+            text:""
+            size_hint:[0.98,None]
+            padding:[100,50]
+            size: self.texture_size 
+            md_bg_color: [0.128,0,1,0.15]
+    
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.15, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : (root.width**2 + root.height**2) / 16.5**4
+        on_press: 
+            app.root.current = "reports"
+        
+    MDRaisedButton:
+        id : printRButton
+        pos_hint:{"x":0.25,"y":0.0775}
+        size_hint: 0.15, 0.115
+        text: "Print Reciept"
+        font_style : "H6"
+    
+    MDRaisedButton:
+        id : printRDButton
+        pos_hint:{"x":0.635,"y":0.0775}
+        size_hint: 0.25, 0.115
+        text: "Print Detailed Reciept"
+        font_style : "H6"
+
+
+<SettingsScreen>:
+    name : "settings"
+
+    canvas:
+        Color:
+            rgba: 0.128,0.128,0.128,1
+        Line:
+            points : [root.width*0.4, root.height*0.215, root.width*0.4, root.height*0.75 ]
+            width:5
+
+    Button:
+        pos_hint:{"x":0,"y":0}
+        size_hint: 0.125, 0.125
+        text: "[b]Back[/b]"
+        markup : True
+        font_size : ((root.width**2 + root.height**2) / 17**4)
+        on_release: 
+            app.root.current = "main"
+    
+    MDToolbar:
+        title:" SETTINGS "
+        anchor_title: "center"
+        size_hint: 1 , 0.135
+        pos_hint : {"x":0,"y":0.865}  
+        md_bg_color: [0.128,0.128,0.128,1]
+    
+    MDLabel:
+        text: "Printer Settings"
+        pos_hint : {"x":0.05,"y":0.765}
+        size_hint : [0.25 , 0.1 ]
+        font_style: "H4"
+        halign: "center"
+        theme_text_color:"Primary"
+
+    MDLabel:
+        text: " Back-up or Download Data"
+        pos_hint : {"x":0.485,"y":0.765}
+        size_hint : [0.455 , 0.1 ]
+        font_style: "H4"
+        halign: "center"
+        theme_text_color:"Primary"
+
+    MDLabel:
+        text: " Select Printer : "
+        pos_hint : {"x":0.005,"y":0.6675}
+        size_hint : [0.15 , 0.1 ]
+        font_style: "H6"
+        halign: "center"
+        theme_text_color:"Primary"
+
+    MDLabel:
+        text: "Cash Drawer Connected ?"
+        pos_hint : {"x":0.005,"y":0.385}
+        size_hint : [0.24 , 0.1 ]
+        font_style: "H6"
+        halign: "right"
+        theme_text_color:"Primary"
+
+    MDSwitch:
+        id : cashDrawer
+        pos_hint: {'x': 0.15, 'y': 0.315}
+        width : dp(84)
+    
+    MDLabel:
+        text: "NO"
+        pos_hint : {"x":0.025,"y":0.32}
+        size_hint : [0.1 , 0.075 ]
+        halign: "right"
+        font_style: "H6"
+
+    MDLabel:
+        text: "YES"
+        pos_hint : {"x":0.265,"y":0.32}
+        size_hint : [0.1 , 0.075 ]
+        halign: "left" 
+        font_style: "H6"
+
+    MDRaisedButton:
+        pos_hint : {"x":0.015,"y":0.15}
+        size_hint : [0.35 , 0.125 ]
+        text: " Submit Printer Changes"
+        font_style: "H6"
+        halign: "center"
+        on_press : root.submitPrinter()
+
+    Button:
+        id: fileManagerButton 
+        pos_hint : {"x":0.85,"y":0.65}
+        size_hint : [0.135 , 0.075 ]
+        text: " Select Path "
+        font_style: "H6"
+        halign: "center"
+    
+    MDLabel:
+        id : filePathLabel
+        text: ""
+        padding : 20,5
+        pos_hint : {"x":0.435,"y":0.65}
+        size_hint : [0.4 , 0.075 ]
+        halign: "left" 
+        font_style: "H6"
+        md_bg_color: 0.128,0.128,0.128,0.25
+    
+    MDGridLayout:
+        pos_hint : {"x":0.425,"y":0.135}
+        size_hint : [0.575 , 0.5 ]
+        cols : 2
+        row_force_default :True
+        row_default_height: root.height*0.125
+        col_force_default :True
+        col_default_width: root.width*0.25
+        padding : 40,50
+        spacing : 30
+
+        Button:
+            text: " CASH OUT/ NO SALE "
+            on_press : root.cashTableData()
+            background_color : 0.128,0.128,0.128,1
+
+        Button:
+            text: " SHIFTS DATA "
+            on_press : root.shiftsTableData()
+            background_color : 0.128,0.128,0.128,1
+        
+        Button:
+            text: " TRANSACTIONS DATA "
+            on_press : root.transactionsTableData()
+            background_color : 0.128,0.128,0.128,1
+
+        Button:
+            text: "ITEM TRANSACTIONS DATA"
+            on_press : root.allTransactionsTableData()
+            background_color : 0.128,0.128,0.128,1
+        
+        Button:
+            text: "INVENTORY DATA"
+            on_press : root.inventoryTableData()
+            background_color : 0.128,0.128,0.128,1
+        
+        Button:
+            text: "ALL DATA"
+            on_press : root.allTableData()
+            background_color : 0.128,0.128,0.128,1
+            font_style: "H4"
+    
+
+<currentInventoryScreen>:
+    name : "current_inventory"
+    
+    Button:
+        pos_hint:{"x":0.01,"y":0.88}
+        size_hint: 0.105, 0.105
+        text: "[b]Close[/b]"
+        markup : True
+        font_size : ((root.width**2 + root.height**2) / 17**4)
+        on_release: 
+            app.root.current = "reports"
+    
+    MDToolbar:
+        title:" All Current Inventory Data "
+        anchor_title: "center"
+        size_hint: 0.875 , 0.135
+        pos_hint : {"x":0.125,"y":0.865}  
+        md_bg_color: [0.128,0.128,0.128,1]
+
