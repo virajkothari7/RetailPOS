@@ -8,11 +8,11 @@ Config.set('kivy', 'exit_on_escape', 0)
 Config.set('kivy', 'window_icon', './images/cash-register-g87e120a86_640.png')
 # Config.set('graphics','borderless',0)# 1 for making this app only visible
 # Config.set('graphics','fullscreen','auto') # Will us this if running in Main or Second full-screen
-Config.set('graphics', 'position', 'custom')
-Config.set('graphics', 'left', 0)
-Config.set('graphics', 'top',  0)
-Config.set('graphics', 'width', 960)
-Config.set('graphics', 'height', 540)
+# Config.set('graphics', 'position', 'custom')
+# Config.set('graphics', 'left', 0)
+# Config.set('graphics', 'top',  0)
+# Config.set('graphics', 'width', 960)
+# Config.set('graphics', 'height', 540)
 # Config.set('graphics', 'resizable', 0)
 
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
