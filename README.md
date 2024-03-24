@@ -50,12 +50,12 @@ To get started with RetailPOS, follow these steps:
 <br><br>
 <table>
   <tr>
-    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screensShots/snapshot2.png></td>
-    <!-- <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screensShots/snapshot.png>></td> -->
+    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screenShots/Screenshot2.png></td>
+    <!-- <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screenShots/Screenshot2.png></td> -->
   </tr>
   <tr>
-    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screensShots/snapshot1.png>></td>
-    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screensShots/snapshot10.png>></td>
+    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screenShots/Screenshot1.png></td>
+    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screenShots/Screenshot10.png></td>
   </tr>
 </table>
 <br> 
