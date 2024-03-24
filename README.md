@@ -46,7 +46,6 @@ To get started with RetailPOS, follow these steps:
 <br>
 
 ## Screenshots
-<br>
 <table>
   <tr>
     <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screenShots/Screenshot2.png /></td>
@@ -58,6 +57,7 @@ To get started with RetailPOS, follow these steps:
     <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/screenShots/Screenshot3.png /></td>
   </tr>
 </table>
+
 <br> 
 
 ## Running on Raspberry Pi
@@ -78,7 +78,7 @@ To get started with RetailPOS, follow these steps:
           
     sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
   
-  To run program, follow **Installation and Downloading** section.
+  Now, follow **Installation and Downloading** section.
   Use **sudo python** if you have trouble running regular **python** command.
 
     
