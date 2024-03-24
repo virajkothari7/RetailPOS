@@ -45,6 +45,22 @@ To get started with RetailPOS, follow these steps:
 
 <br>
 
+## Screenshots
+
+<br><br>
+<table>
+  <tr>
+    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/snapshots/snapshot2.png></td>
+    <!-- <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/snapshots/snapshot.png>></td> -->
+  </tr>
+  <tr>
+    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/snapshots/snapshot1.png>></td>
+    <td><img src=https://github.com/virajkothari7/RetailPOS/blob/main/snapshots/snapshot10.png>></td>
+  </tr>
+</table>
+<br> 
+<br>
+
 ## Running on Raspberry Pi
 
   RetailPOS is compatible with Raspberry Pi, however, it may run slower.  

@@ -29,9 +29,12 @@ class SettingsScreen(MDScreen):
     def on_pre_enter(self, *args):
         self.file_manager = MDFileManager( exit_manager = self.exit_fileManager, select_path = self.select_filePath, )
 
-        for cfg in usb.core.find(find_all=True):
-            self.devices.append([cfg.manufacturer , cfg.product ,str(cfg.idVendor), str(cfg.idProduct)] )
-        
+        try:
+            for cfg in usb.core.find(find_all=True):
+                self.devices.append([cfg.manufacturer , cfg.product ,str(cfg.idVendor), str(cfg.idProduct)] )
+        except Exception as e:
+                print(e)
+
         dropdown1 = DropDown()
         for i, idx in enumerate(self.devices):
             btn = Button(text=f"{i} {idx[0]}   {idx[1]}",font_size=36 ,size_hint=[1,None],halign="left" )
