@@ -1,7 +1,8 @@
-import sqlite3
+import sqlite3, os
 from datetime import datetime, timedelta
 import databaseScripts.allTransactions as AT
 
+os.makedirs('./data', exist_ok=True)
 conn = sqlite3.connect('./data/transactions.db')
 
 c = conn.cursor()
@@ -121,7 +122,7 @@ def getDayTransactions():
 
 
 def getTransactionsByDate(date):
-    c.execute("SELECT * FROM transactions WHERE date = (?) ",(date,))
+    c.execute("SELECT * FROM transactions WHERE DATE(date_time) = (?) ",(date,))
     rows = c.fetchall()
     return list(rows)
 

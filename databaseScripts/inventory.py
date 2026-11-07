@@ -1,6 +1,7 @@
-import sqlite3
+import sqlite3, os
 from datetime import datetime
 
+os.makedirs('./data', exist_ok=True)
 conn = sqlite3.connect('./data/inventory.db')
 
 c = conn.cursor()
@@ -57,7 +58,7 @@ def getNames():
 
 # fetching only Departments from database
 def getDepartments():
-    c.execute("SELECT UNIQUE department FROM items")
+    c.execute("SELECT DISTINCT department FROM items")
     rows = c.fetchall()
     return list(rows)
 
@@ -252,7 +253,7 @@ def decreaseQuantity(barcode_number, delQty = 1):
 
 
 def deleteItemFromBarcode(barcode_number):
-    c.execute(f"DELETE FROM items WHERE barcode = {barcode_number}")
+    c.execute("DELETE FROM items WHERE barcode = (?)", (barcode_number,))
     conn.commit()
     return True
 

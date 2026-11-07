@@ -141,8 +141,7 @@ class RetailScreen(MDScreen):
             item = deepcopy(variableButtons[barcode])
             item["discount_v"] = ""
             item["sell_price"] = kwargs["price"]
-            self.cart = self.cart.append(item,ignore_index = True)
-            # self.cart = pd.concat([self.cart,pd.Series(item).to_frame().T])
+            self.cart = pd.concat([self.cart, pd.DataFrame([item])], ignore_index=True)
             self.update_table()
         elif inv.isBarcode(barcode):
             if  barcode in self.cart["barcode"].to_list():
@@ -150,8 +149,9 @@ class RetailScreen(MDScreen):
                 self.cart.loc[index,"qty"] += 1
             else:
                 item = dict(zip(["Name","Barcode","Department","Purchase Price","Selling Price","Quantity","Tax Category","Deposit Category"], inv.getItemFromBarcode(barcode.strip())))
-                self.cart = self.cart.append({'barcode':item["Barcode"],'name':item["Name"],"department":item["Department"].split("\n")[0],"purchase_price":item["Purchase Price"],'sell_price':item["Selling Price"],
-                        'qty':1,'deposit':item["Deposit Category"].split("\n")[0],'deposit_value':0,'tax':item["Tax Category"].split("\n")[0],'tax_value':0,'discount':"",'discount_v':"",'discountPromo':"",'line_total':0},ignore_index = True)
+                newRow = {'barcode':item["Barcode"],'name':item["Name"],"department":item["Department"].split("\n")[0],"purchase_price":item["Purchase Price"],'sell_price':item["Selling Price"],
+                        'qty':1,'deposit':item["Deposit Category"].split("\n")[0],'deposit_value':0,'tax':item["Tax Category"].split("\n")[0],'tax_value':0,'discount':"",'discount_v':"",'discountPromo':"",'line_total':0}
+                self.cart = pd.concat([self.cart, pd.DataFrame([newRow])], ignore_index=True)
             self.update_table()
         else:
             if self.dialog: 
@@ -164,16 +164,19 @@ class RetailScreen(MDScreen):
 
     def get_rows(self):
         for i in self.cart.index:
+            lineSubTotal = 0.0
+            lineTotal = 0.0
+            tax_p = 0.0
             try:
                 lineSubTotal = float(self.cart.loc[i,'qty'])*float(self.cart.loc[i,'sell_price'])
                 lineTotal = lineSubTotal
             except: pass #need to add dialog box
-            
+
             try:
-                if inv.getValueFromId(self.cart.loc[i,'tax']) != "N\A":
+                if inv.getValueFromId(self.cart.loc[i,'tax']) != "N/A":
                     tax_p =float(inv.getValueFromId(self.cart.loc[i,'tax']).strip("%"))/100
                     self.cart.loc[i,'tax_value'] = round(tax_p*lineSubTotal,2)
-                    lineTotal += self.cart.loc[i,'tax_value'] 
+                    lineTotal += self.cart.loc[i,'tax_value']
             except: self.cart.loc[i,'tax_value'] = 0
 
             try:
@@ -217,7 +220,7 @@ class RetailScreen(MDScreen):
             except: pass
             
             try:
-                if inv.getValueFromId(self.cart.loc[i,'deposit']) != "N\A":
+                if inv.getValueFromId(self.cart.loc[i,'deposit']) != "N/A":
                     self.cart.loc[i,'deposit_value'] = round(float(inv.getValueFromId(self.cart.loc[i,'deposit']))*float(self.cart.loc[i,'qty']) ,2)
                     lineTotal += self.cart.loc[i,'deposit_value']
             except: self.cart.loc[i,'deposit_value'] = 0
@@ -299,7 +302,7 @@ class RetailScreen(MDScreen):
         if self.dialog.content_cls.ids.textField.text:
             try: value = float(self.dialog.content_cls.ids.textField.text)
             except: value = None
-            if value: 
+            if value is not None:
                 self.cart.iloc[row_num,self.cart.columns.get_loc(column)] = value
             self.update_table()
     
@@ -422,8 +425,6 @@ class RetailScreen(MDScreen):
             self.sv.add_widget( MDLabel(text = f"{barcode}\n{inv.getNameFromBarcode(barcode)}\n\nPrice : {inv.getSellPriceFromBarcode(barcode)}",halign = "center",
                             pos_hint={'x':0.05,'y':0.175},size_hint=[0.9,0.6], font_style = "H6" ) )
             self.sv.add_widget(MDRaisedButton(text="Add\nItem",font_style="H6",on_press = partial(self.add_cart,barcode,None),pos_hint={'x':0.7,'y':0.7},size_hint=[0.265,0.25]))
-        elif barcode == "stop_current_app_quit()":
-            quit()
 
     def cashOut(self,name,invNo,amount,*args):
         name = name.text.strip()
@@ -462,7 +463,7 @@ class RetailScreen(MDScreen):
         if self.dialog.content_cls.ids.textField.text:
             try: value = float(self.dialog.content_cls.ids.textField.text)
             except: value = None
-            if value: self.add_cart(barcode,True,price=value)
+            if value is not None: self.add_cart(barcode,True,price=value)
     
     def calculateCash(self,*args):
         if round(self.cart["line_total"].sum(),2)>0:

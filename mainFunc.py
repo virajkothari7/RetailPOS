@@ -2,7 +2,7 @@ import databaseScripts.inventory as inv
 import databaseScripts.allTransactions as at
 import databaseScripts.transactions as ts
 import databaseScripts.shifts as sf
-import sqlite3, os, shutil
+import sqlite3, os, shutil, ast
 import pandas as pd
 from datetime import datetime
 from escpos.printer import Usb
@@ -140,6 +140,7 @@ def generateReceipt(transNo,productList, sub_total ,deposit_total, tax_total, to
     if len(data["Address Line-1"]) > 1 : receipt.append(data["Address Line-1"].center(y))
     if len(data["Address Line-2"]) > 1 : receipt.append(data["Address Line-2"].center(y))
     if len(data["Store Phone"]) > 1 : receipt.append(data["Store Phone"].center(y))
+    if len(data.get("VAT Number","")) > 1 : receipt.append(f"VAT No: {data['VAT Number']}".center(y))
     if len(data["Additional Heading"]) > 1 : receipt.append(data["Additional Heading"].center(y))
     receipt.append((f"Date: {transNo[:4]}/{transNo[4:6]}/{transNo[6:8]}    Time: {transNo[8:10]}:{transNo[10:12]}").center(y))
     receipt.append("*"*length)
@@ -169,21 +170,41 @@ def generateReceipt(transNo,productList, sub_total ,deposit_total, tax_total, to
     return "\n".join(receipt)
 
 
+# Default shape for the editable store/receipt info. New keys can be appended here
+# in the future and _DEFAULT_DATA.setdefault-merging below will backfill them into
+# any variable.txt saved by an older version of the app, without wiping existing data.
+_DEFAULT_DATA = {"Store Name":"", "Address Line-1":"", "Address Line-2":"", "Store Phone":"",
+                  "VAT Number":"", "Additional Heading":"","Footer Line-1":"","Footer Line-2":""}
+
+_corruptVariableFile = False
 if os.path.exists("variable.txt"):
-    with open("variable.txt","r") as file:
-        lines=file.readlines()
-        data = eval(lines[0])
-        shift = eval(lines[1])
-        tabs = eval(lines[2])
-        variableButtons = eval(lines[3])
-        printerSettings = eval(lines[4])
-else :
+    try:
+        with open("variable.txt","r") as file:
+            lines=file.readlines()
+            data = ast.literal_eval(lines[0])
+            shift = ast.literal_eval(lines[1])
+            tabs = ast.literal_eval(lines[2])
+            variableButtons = ast.literal_eval(lines[3])
+            printerSettings = ast.literal_eval(lines[4])
+        for key, default in _DEFAULT_DATA.items():
+            data.setdefault(key, default)
+    except Exception as e:
+        # variable.txt exists but is unreadable/corrupted (e.g. the app was killed
+        # mid-write). Don't let that permanently brick the register on next launch;
+        # archive the bad file and fall through to a fresh default setup below.
+        _corruptVariableFile = True
+        with open('errorLog',"a") as errFile:
+            errFile.write(f"\nCorrupt variable.txt, regenerating defaults : {datetime.now()}\n{e}\n\n")
+        try: shutil.move("variable.txt", f"variable.txt.corrupt_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        except Exception: pass
+
+if (not os.path.exists("variable.txt")) or _corruptVariableFile:
     with open("variable.txt","w") as file:
         print("!!!!!   Initial Setup Starting   !!!!!")
-        data = {"Store Name":"", "Address Line-1":"", "Address Line-2":"", "Store Phone":"","Additional Heading":"","Footer Line-1":"","Footer Line-2":""}
+        data = dict(_DEFAULT_DATA)
         shift =  {"Shift No": 1,"Shift Names":"","Shift StartTime":"" }
         tabs=[["Tab 1",None],["Tab 2",None],["Tab 3",None],["Tab 4",None]]
-        variableButtons = { "MISC_GENERAL" : {'barcode':"MISC_GENERAL",'name':"Miscellaneous/General","department":"Department_2","purchase_price":0,'qty':1,'deposit':"s",'deposit_value':0,'tax':"",'tax_value':0,'discount':"",'discountPromo':"",'line_total':0},
+        variableButtons = { "MISC_GENERAL" : {'barcode':"MISC_GENERAL",'name':"Miscellaneous/General","department":"Department_2","purchase_price":0,'qty':1,'deposit':"Deposit_1",'deposit_value':0,'tax':"",'tax_value':0,'discount':"",'discountPromo':"",'line_total':0},
                             "DELI_GENERAL" : {'barcode':"DELI_GENERAL",'name':"DELI/General","department":"Department_3","purchase_price":0,'qty':1,'deposit':"Deposit_1",'deposit_value':0,'tax':"",'tax_value':0,'discount':"",'discountPromo':"",'line_total':0} }
         printerSettings = {"Printer_VendorID": None, "Printer_ProductID":None,"Print_Reciept":False,"Cash_Drawer":False}
         file.write(f"{data}\n{shift}\n{tabs}\n{variableButtons}\n{printerSettings}")
