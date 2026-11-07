@@ -176,6 +176,6 @@ class SettingsScreen(MDScreen):
         if self.resetdialog.content_cls.ids.textField.text:
             try: value = int(self.resetdialog.content_cls.ids.textField.text)
             except: value = None
-            if value: 
+            if value is not None:
                 if value == number:
                     reset__()

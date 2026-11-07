@@ -1,7 +1,8 @@
-import sqlite3
+import sqlite3, os
 import databaseScripts.inventory as inventory
 from datetime import datetime, timedelta
 
+os.makedirs('./data', exist_ok=True)
 conn = sqlite3.connect('./data/allTransactions.db')
 c = conn.cursor()           
 
@@ -91,9 +92,9 @@ def getTransactionData(trans_id):
 
 def getItemTransaction(trans_id,barcode_num):
     params = (trans_id,barcode_num)
-    c.execute("SELECT * FROM all_transactions WHERE transaction_id = ? AND barcode_num = ?",params)
+    c.execute("SELECT * FROM all_transactions WHERE transaction_id = ? AND barcode = ?",params)
     rows = c.fetchone()
-    return list(rows)
+    return list(rows) if rows else []
 
 # fetching only dates from database
 def getDates():
@@ -146,6 +147,7 @@ def getTransactionsByDate(date):
 # deleting the whole database (just in case function)
 def deleteData():
     c.execute("DELETE FROM all_transactions")
+    conn.commit()
 
 
 c.execute("""CREATE TABLE IF NOT EXISTS registerTabs( 

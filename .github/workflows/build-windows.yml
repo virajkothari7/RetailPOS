@@ -1,0 +1,77 @@
+name: Build Windows installer
+
+# Builds the client-ready RetailPOS.exe and RetailPOS_Setup.exe on a clean,
+# disposable GitHub-hosted Windows machine - no local PC, no antivirus/
+# PowerShell-policy/OneDrive issues like a real machine can have.
+#
+# Run it from the Actions tab (Run workflow button) any time you want a
+# fresh build, or it runs automatically on every push to this branch.
+# Download the finished files from the run's "Artifacts" section at the
+# bottom of the run's summary page once it's green.
+
+on:
+  push:
+    branches: [ retailpos-fixes-and-windows-build ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install app dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install packaging tools
+        run: |
+          pip install pyinstaller "kivy_deps.sdl2" "kivy_deps.glew"
+
+      - name: Build RetailPOS.exe with PyInstaller
+        run: |
+          pyinstaller packaging/RetailPOS.spec --noconfirm
+
+      - name: Smoke-test the built exe starts without crashing
+        run: |
+          $proc = Start-Process -FilePath "dist\RetailPOS\RetailPOS.exe" -PassThru
+          Start-Sleep -Seconds 8
+          if ($proc.HasExited) {
+            Write-Error "RetailPOS.exe exited on its own within 8 seconds (exit code $($proc.ExitCode)) - treating this as a build failure."
+            Get-Content -Path "dist\RetailPOS\logsKivy\*" -ErrorAction SilentlyContinue | Select-Object -Last 100
+            exit 1
+          }
+          Write-Host "RetailPOS.exe is still running after 8 seconds - looks healthy."
+          Stop-Process -Id $proc.Id -Force
+
+      - name: Zip the raw app folder
+        run: |
+          Compress-Archive -Path "dist\RetailPOS\*" -DestinationPath "RetailPOS_app.zip"
+
+      - name: Install Inno Setup
+        run: |
+          choco install -y innosetup
+
+      - name: Build the installer (RetailPOS_Setup.exe)
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\RetailPOS_installer.iss
+
+      - name: Upload raw app folder (zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetailPOS-app-folder
+          path: RetailPOS_app.zip
+
+      - name: Upload installer (what to give the client)
+        uses: actions/upload-artifact@v4
+        with:
+          name: RetailPOS-Setup-installer
+          path: packaging/Output/RetailPOS_Setup.exe

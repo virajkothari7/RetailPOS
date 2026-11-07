@@ -19,6 +19,7 @@ import databaseScripts.transactions as ts
 import databaseScripts.inventory as inv
 import databaseScripts.shifts as shifts
 import pandas as pd
+import ast
 from datetime import datetime
 from functools import partial
 from copy import deepcopy
@@ -352,7 +353,7 @@ class ReportsScreen(MDScreen):
         sm.current = "receipt_transactions"
         sm.get_screen("receipt_transactions").ids.recieptScreen.text = receipt
         prod = "#"*25 +"\n\n"
-        for i in eval(products):
+        for i in ast.literal_eval(products):
             for j in i.keys():
                 prod += j.upper() + " : " + str(i[j]) +"\n"
             prod += "\n"+"#"*25 +"\n\n"

@@ -1,5 +1,32 @@
 ######################    Import Kivy Libraries  ###################
-import os 
+import os, sys
+# Every relative path in this app ("./images/...", "./data", "./logsKivy",
+# "./posapp.kv") assumes the working directory is the app's own install
+# folder. That's true when launched via `python main.py` from the repo, but
+# a packaged .exe launched from a Desktop/Start-Menu shortcut can start with
+# a different cwd (e.g. the user's home directory) unless the shortcut's
+# "Start in" field happens to be set correctly - so pin it explicitly here.
+if getattr(sys, "frozen", False):
+    os.chdir(os.path.dirname(sys.executable))
+
+# A packaged Windows build runs "windowed" (no console attached, by design -
+# a POS till shouldn't show a black terminal box), which means Windows gives
+# the process None for sys.stdout/sys.stderr instead of real file handles.
+# Python's own logging module (and some dependencies) assume they can always
+# write() to stderr and crash with "'NoneType' object has no attribute
+# 'write'" the moment anything tries to log - this is a well-known PyInstaller
+# --windowed/--noconsole gotcha, not a bug in this app's own logic. Giving
+# both streams a real (discarded) file-like target fixes it; wrapped in
+# try/except in case the install folder is somehow unwritable.
+if sys.stdout is None or sys.stderr is None:
+    try:
+        _devnull = open(os.devnull, "w")
+        if sys.stdout is None: sys.stdout = _devnull
+        if sys.stderr is None: sys.stderr = _devnull
+    except Exception:
+        pass
+
+os.makedirs(os.path.join(os.getcwd(), "logsKivy"), exist_ok=True)
 from kivy.config import Config
 Config.set('kivy', 'log_dir', f"{os.getcwd()}/logsKivy")
 Config.set('kivy', 'log_level', 'info')

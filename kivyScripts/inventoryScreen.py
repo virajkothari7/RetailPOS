@@ -159,8 +159,10 @@ class InventoryScreen(MDScreen):
     
     def newInventoryAdd(self, barcode, qty,*args):
         qty = qty.text.strip()
-        if qty != "" and int(qty) > 0 :
-            inv.increaseQuantity(barcode, qty)
+        try: qtyValue = float(qty)
+        except: qtyValue = None
+        if qtyValue is not None and qtyValue > 0 :
+            inv.increaseQuantity(barcode, int(qtyValue))
             if self.dialog:
                 self.remove_widget(self.dialog)
                 self.dialog = None
@@ -244,6 +246,13 @@ class InventoryScreen(MDScreen):
         self.add_widget(self.layout)
         self.getLabel(y="new")
 
+    def _isValidDecimal(self,text):
+        try:
+            float(text)
+            return True
+        except (ValueError, TypeError):
+            return False
+
     def newProductConfirm(self,columnData,*args,**kwargs):
         error = {}
         for i in columnData:
@@ -264,19 +273,19 @@ class InventoryScreen(MDScreen):
                 title="!! Item already exists !!",
                 )
             self.dialog.open()
-        elif not re.search(r"^\d*$", columnData['Purchase Price'].text.strip().replace(".","") ):
+        elif not self._isValidDecimal(columnData['Purchase Price'].text.strip()):
             if self.dialog: self.remove_widget(self.dialog)
             self.dialog = MDDialog(
                 title="!! Invalid Input, Purchase Price !!\nMust be Number or Decimal value only...",
                 )
             self.dialog.open()
-        elif (not re.search(r"^\d*$", columnData['Selling Price'].text.strip().replace(".","") )) or float(columnData['Selling Price'].text.strip()) <= 0 :
+        elif (not self._isValidDecimal(columnData['Selling Price'].text.strip())) or float(columnData['Selling Price'].text.strip()) <= 0 :
             if self.dialog: self.remove_widget(self.dialog)
             self.dialog = MDDialog(
                 title="!! Invalid Input, Selling Price !!\nMust be Number or Decimal value and greater than 0.0 ",
                 )
             self.dialog.open()
-        elif (not re.search(r"^\d*$",columnData['Quantity'].text.strip())) or int(columnData['Quantity'].text.strip()) < 0   :
+        elif (not re.search(r"^\d+$",columnData['Quantity'].text.strip())) or int(columnData['Quantity'].text.strip()) < 0   :
             if self.dialog: self.remove_widget(self.dialog)
             self.dialog = MDDialog(
                 title="!! Invalid Input, Quantity !!\nMust be Number value and greater than 0 ",
@@ -839,13 +848,14 @@ class InventoryScreen(MDScreen):
                     title="!! Oops, Invalid Input !!",
                     )
                 self.dialog.open()
-            inv.updateNameFromId(self.nameField.text.strip(),self.nameField.helper_text)
-            if self.dialog: self.remove_widget(self.dialog)
-            self.dialog = MDDialog(
-                title="Department name has been successfully updated !!",
-                )
-            self.dialog.open()
-            self.department()
+            else:
+                inv.updateNameFromId(self.nameField.text.strip(),self.nameField.helper_text)
+                if self.dialog: self.remove_widget(self.dialog)
+                self.dialog = MDDialog(
+                    title="Department name has been successfully updated !!",
+                    )
+                self.dialog.open()
+                self.department()
         if ('Tax' in widget.text):
             if self.nameField.text.strip()=="" and self.barcode.text.strip()=="" :
                 if self.dialog: self.remove_widget(self.dialog)
