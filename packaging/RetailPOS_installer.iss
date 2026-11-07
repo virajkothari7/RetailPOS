@@ -17,9 +17,22 @@ AppId={{B6B2B6A0-6C7C-4C9B-9F1A-RETAILPOS001}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-DefaultDirName={autopf}\{#MyAppName}
+; NOT Program Files: this app writes its own log/data files (logsKivy\,
+; data\, variable.txt, errorLog) right next to its own exe at runtime,
+; using plain relative paths - it was never written to use a separate
+; writable app-data folder. Program Files is locked down against writes
+; from a normal (non-admin) process by Windows itself, so launching the
+; app after an {autopf} install throws PermissionError the moment it
+; tries to write its first log line - which is exactly what happened on
+; first install. {localappdata} is a normal user's own writable folder
+; (no admin rights needed to install OR run), and is the correct choice
+; for an app built this way.
+DefaultDirName={localappdata}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
+; No admin rights needed for a per-user {localappdata} install - skip the
+; UAC prompt entirely so the client doesn't need an administrator password.
+PrivilegesRequired=lowest
 ; Each client install keeps its own data/ folder (sales, inventory, shift
 ; history) inside the install directory - do NOT let the uninstaller nuke it.
 OutputBaseFilename=RetailPOS_Setup
