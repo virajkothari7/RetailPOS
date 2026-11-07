@@ -11,24 +11,18 @@
 # This must be run ON the target OS (Windows build -> run on Windows,
 # macOS build -> run on macOS, etc). PyInstaller does not cross-compile.
 #
-# Note: Kivy 2.0.0 ships its own PyInstaller helper
-# (kivy.tools.packaging.pyinstaller_hooks), and PyInstaller itself ships a
-# built-in hook-kivy.py that imports it. Both reference
-# PyInstaller.compat.modname_tkinter, which was removed from PyInstaller a
-# few releases back - without the shim below, PyInstaller's own automatic
-# hook discovery crashes with ImportErrorWhenRunningHook before the build
-# can even start, for every PyInstaller version new enough to run on
-# Python 3.11. This restores just that one name so Kivy's hook loads; it's
-# never actually used for anything (this app has no Tk/tkinter dependency).
+# Note: PyInstaller's own built-in hook-kivy.py is NOT used here - see
+# packaging/pyinstaller_hooks/hook-kivy.py for why (short version: it
+# imports kivy.core.window to work out what to bundle, which tries to
+# create a real window/OpenGL context, and hangs indefinitely instead of
+# failing cleanly on a headless CI runner with no GPU). This spec computes
+# the same information by hand instead and overrides hookspath so
+# PyInstaller never reaches the built-in hook.
 
 import os
 import kivy
 import escpos
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
-
-import PyInstaller.compat as _pyi_compat
-if not hasattr(_pyi_compat, "modname_tkinter"):
-    _pyi_compat.modname_tkinter = "tkinter"
 
 block_cipher = None
 
@@ -103,7 +97,7 @@ a = Analysis(
         "escpos.printer",
         "openpyxl",
     ],
-    hookspath=[],
+    hookspath=[os.path.join(PROJECT_ROOT, "packaging", "pyinstaller_hooks")],
     runtime_hooks=[],
     excludes=["tkinter", "_tkinter", "twisted"],
     win_no_prefer_redirects=False,
