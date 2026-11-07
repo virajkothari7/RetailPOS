@@ -500,7 +500,7 @@ class RetailScreen(MDScreen):
             
             if isinstance(value,int) or isinstance(value,float):
                 if value >= total:
-                    self.saveTransactions(total,tax,self.cart.copy(deep=True),"CASH")
+                    self.saveTransactions(total,tax,self.cart.copy(deep=True),"CASH",cashTendered=value)
                     self.cart.drop(self.cart.index,inplace=True)
                     self.update_table()
                     if total>0:
@@ -527,7 +527,7 @@ class RetailScreen(MDScreen):
                 
         
 
-    def saveTransactions(self,total,tax,trans,payment):
+    def saveTransactions(self,total,tax,trans,payment,cashTendered=None):
         detailDict = {}
         detailDict['date_time'] = datetime.now()
         detailDict['shift_id'] = shift["Shift No"]
@@ -537,7 +537,9 @@ class RetailScreen(MDScreen):
         detailDict['tax_amount'] = tax
         detailDict['payment_type'] = payment
         detailDict['products'] = trans.to_dict('records')
-        detailDict['receipt'] = generateReceipt(detailDict['transaction_id'],detailDict['products'],detailDict['total_amount'] ,round(self.cart["deposit_value"].sum(),2),detailDict['tax_amount'],detailDict['total_sale'])
+        change = round(cashTendered - total, 2) if cashTendered is not None else None
+        detailDict['receipt'] = generateReceipt(detailDict['transaction_id'],detailDict['products'],detailDict['total_amount'] ,round(self.cart["deposit_value"].sum(),2),detailDict['tax_amount'],detailDict['total_sale'],
+            cash_tendered=cashTendered, change=change)
         ts.addData(detailDict)
         
         if printer.printer is None: printer.connectPrinter() 

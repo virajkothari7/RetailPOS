@@ -92,11 +92,33 @@ kivy_hiddenimports = sorted(set(
         "kivy.core.window.window_pygame",
         "kivy.core.window.window_egl_rpi",
         "kivy.core.window.window_info",
+        # Kivy's own kivy/factory_registers.py registers RecycleView /
+        # RecycleViewBehavior under the literal dotted name
+        # "kivy.uix.recycleview.__init__", not "kivy.uix.recycleview" - a
+        # quirk specific to this one widget (its classes live directly in
+        # the package's __init__.py, and Kivy's Factory does an explicit
+        # import of that exact string at the moment something requests the
+        # widget by name from .kv). collect_submodules("kivy.uix") below
+        # bundles "kivy.uix.recycleview" just fine, but PyInstaller's
+        # frozen import table has no entry for the separate
+        # "...__init__" name Factory actually asks for, so it has to be
+        # listed explicitly - this exact gap is what crashed Settings on a
+        # real Windows install with "No module named
+        # 'kivy.uix.recycleview.__init__'" the moment MDFileManager
+        # (which uses RecycleView) was constructed.
+        "kivy.uix.recycleview.__init__",
     ]
     + collect_submodules("kivy.graphics")
     + collect_submodules("kivy.core.text")
     + collect_submodules("kivy.core.image")
     + collect_submodules("kivy.core.clipboard")
+    # Same reasoning as the kivymd.uix.* collection below: Kivy's own
+    # widgets (e.g. kivy.uix.recycleview, used internally by KivyMD's file
+    # manager) are loaded on demand via Kivy's Factory, not through a plain
+    # `import` anywhere in this project's source, so PyInstaller's static
+    # scan misses them too unless the whole kivy.uix package is included up
+    # front.
+    + collect_submodules("kivy.uix")
 ))
 
 a = Analysis(
@@ -106,6 +128,7 @@ a = Analysis(
     datas=kivy_datas + collect_data_files("escpos") + collect_data_files("kivymd") + [
         (os.path.join(PROJECT_ROOT, "posapp.kv"), "."),
         (os.path.join(PROJECT_ROOT, "images"), "images"),
+        (os.path.join(PROJECT_ROOT, "fonts"), "fonts"),
     ],
     # KivyMD widgets are loaded on demand by Kivy's Factory from KivyMD's own
     # internal .kv files (e.g. the first time a screen uses an MDSpinner).

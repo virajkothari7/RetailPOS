@@ -8,9 +8,30 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
 
+import os
+
 from kivyScripts.screenManager import sm, fontsize, Window
 
 from mainFunc import data, updateStoreInformation
+
+# Kivy's bundled default font (Roboto) has no Arabic glyphs, so any field
+# meant to hold Arabic text needs an explicit font that does - otherwise
+# the manager can type it in fine (the character data is stored correctly
+# either way) but can't actually read back what they typed on this screen,
+# and it would show as empty boxes here even though it still prints
+# correctly on receipts (the printer renders Arabic in its own firmware,
+# independent of this on-screen font).
+#
+# Path is relative to the current working directory, not derived from
+# __file__ - matching how every other asset path in this app works (e.g.
+# "./images/..." in main.py/posapp.kv). __file__ can't be trusted to sit
+# next to a real "fonts/" folder once this module is running from inside a
+# PyInstaller-frozen bundle (its .py/.pyc may be packed into an archive
+# rather than existing as a loose file on disk), whereas main.py already
+# os.chdir()s to the app's own install folder before anything else runs,
+# so a plain relative path here always resolves correctly in both dev and
+# packaged builds.
+_ARABIC_FONT = os.path.join("fonts", "NotoSansArabic-Regular.ttf")
 
 
 
@@ -37,10 +58,21 @@ class StoreInformation(MDScreen):
     def buildLayout(self):
         layout = MDGridLayout(cols=3, row_force_default =True, row_default_height=Window.height*0.09, size_hint_x=0.8,size_hint_y=0.6 ,pos_hint = {"x":0.1,"y":0.165 })
         for i in data.keys():
+            isArabicField = "arabic" in i.lower()
             layout.add_widget(MDLabel( text = i+" : " ,font_size = fontsize['text']))
-            self.label[i] = MDLabel( text = f"{data[i]}",font_size = fontsize['text']) 
-            layout.add_widget(self.label[i])
+            self.label[i] = MDLabel( text = f"{data[i]}",font_size = fontsize['text'])
             self.storeDict[i] = MDTextField(max_text_length= 32,multiline=True,helper_text= "Must be less than 32 characters",font_size = fontsize['text'])
+            if isArabicField:
+                # Must be set AFTER construction, not as a constructor kwarg:
+                # MDLabel's own __init__ binds font_style -> update_font_style,
+                # which runs during init and unconditionally overwrites
+                # font_name with the current theme's font for font_style
+                # ("Body1" by default here) - silently undoing a font_name
+                # passed in the constructor. Setting it here, after that
+                # already ran, is what actually sticks.
+                self.label[i].font_name = _ARABIC_FONT
+                self.storeDict[i].font_name = _ARABIC_FONT
+            layout.add_widget(self.label[i])
             layout.add_widget(self.storeDict[i])
         self.layout = layout
         self.add_widget(layout)

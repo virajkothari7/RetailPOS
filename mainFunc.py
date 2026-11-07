@@ -18,10 +18,25 @@ class printer:
     def printReciept(printText,*args,**kwargs):
         try:
             if printer.printer:
+                # CP1256 is the standard Windows Arabic codepage - ESC/POS
+                # printers that advertise Arabic support (common on Gulf-
+                # market thermal printers) do the actual letter-shaping and
+                # right-to-left layout in firmware once this codepage is
+                # selected; this library just needs to send plain Arabic
+                # Unicode text encoded as CP1256 bytes, no pre-shaping
+                # needed on our side. ASCII/English text encodes identically
+                # under CP1256 as under the default codepage, so one
+                # printer.text() call can freely mix English and Arabic.
+                # Needs testing on the actual printer model once known -
+                # not every printer's firmware maps this codepage the same
+                # way, even though CP1256 selection itself is a standard
+                # ESC/POS command.
+                try: printer.printer.charcode('CP1256')
+                except Exception: pass
                 printer.printer.text(printText)
                 printer.printer.print_and_feed(n=3)
                 # printer.printer.cut()
-        except: 
+        except:
             printer.connectPrinter()
             printer.printReciept(printText)
 
@@ -131,40 +146,109 @@ def endShift(*args):
     sm.current = "login_shift"
 
 
-def generateReceipt(transNo,productList, sub_total ,deposit_total, tax_total, total_amount):
+# Bilingual (English/Arabic) tax-invoice labels. These are fixed, standard
+# receipt wording - not something a store manager needs to translate or
+# edit per-shop, unlike the Store Information fields - so they're hardcoded
+# here rather than added to Store Information. Printed one language per
+# line (English, then its Arabic translation directly below) rather than
+# packed onto one line, since the shared 32-char layout is narrow; a wider
+# (e.g. 80mm/42-char) printer could combine them onto single lines instead.
+_LABELS = {
+    "tax_invoice":   ("TAX Invoice",     "فاتورة ضريبية"),
+    "vat_no":        ("VAT No",          "رقم ضريبي"),
+    "inv_no":        ("Invoice No",      "رقم الفاتورة"),
+    "date":          ("Date",            "التاريخ"),
+    "description":   ("Description",     "وصف"),
+    "total_amount":  ("Total Amount",    "اجمالي السعر"),
+    "discount":      ("Discount",        "خصم"),
+    "vat":           ("VAT",             "ضريبة"),
+    "grand_total":   ("Grand Total",     "المبلغ الاجمالي"),
+    "tender_cash":   ("Tender Cash",     "المدفوع"),
+    "cash_return":   ("Cash Return",     "الباقي"),
+    "thank_you_en":  "Thank you, Please Come Again",
+    # Split across two shorter lines rather than one long one - a single
+    # line this length doesn't fit the 32-char width without wrapping
+    # mid-word. Exact line lengths may still need tuning once tested on
+    # the actual printer (Arabic glyph widths can render slightly
+    # differently printer to printer).
+    "thank_you_ar":  ("شكراً لتعاملكم معنا", "نتطلع لزيارتكم مرة أخرى"),
+}
+
+
+def _bilingual_line(key, value, y):
+    en, ar = _LABELS[key]
+    return f"{en} : {value}".ljust(y) + "\n" + ar.center(y)
+
+
+def _money(value):
+    try: return f"{float(value):.2f}"
+    except (TypeError, ValueError): return str(value)
+
+
+def generateReceipt(transNo, productList, sub_total, deposit_total, tax_total, total_amount,
+                     cash_tendered=None, change=None):
     length = 32
-    y = length -1
-    productHead = "\nNo:  NAME/BARCODE  QTY   PRICE "
+    y = length - 1
     receipt = []
+
     receipt.append(data["Store Name"].center(y))
+    if len(data.get("Store Name (Arabic)", "")) > 1: receipt.append(data["Store Name (Arabic)"].center(y))
     if len(data["Address Line-1"]) > 1 : receipt.append(data["Address Line-1"].center(y))
     if len(data["Address Line-2"]) > 1 : receipt.append(data["Address Line-2"].center(y))
     if len(data["Store Phone"]) > 1 : receipt.append(data["Store Phone"].center(y))
-    if len(data.get("VAT Number","")) > 1 : receipt.append(f"VAT No: {data['VAT Number']}".center(y))
     if len(data["Additional Heading"]) > 1 : receipt.append(data["Additional Heading"].center(y))
-    receipt.append((f"Date: {transNo[:4]}/{transNo[4:6]}/{transNo[6:8]}    Time: {transNo[8:10]}:{transNo[10:12]}").center(y))
-    receipt.append("*"*length)
-    receipt.append(("TransactionID : "+transNo).center(y))
-    receipt.append(productHead)
+
+    receipt.append(_LABELS["tax_invoice"][0].center(y))
+    receipt.append(_LABELS["tax_invoice"][1].center(y))
+    if len(data.get("VAT Number","")) > 1:
+        receipt.append(_bilingual_line("vat_no", data["VAT Number"], y))
     receipt.append("-"*length)
+
+    receipt.append(_bilingual_line("inv_no", transNo, y))
+    receipt.append(_bilingual_line("date",
+        f"{transNo[:4]}/{transNo[4:6]}/{transNo[6:8]} {transNo[8:10]}:{transNo[10:12]}", y))
+    receipt.append("-"*length)
+
+    receipt.append(_LABELS["description"][0].center(y))
+    receipt.append(_LABELS["description"][1].center(y))
+    receipt.append("-"*length)
+
+    discount_total = 0
     for count, i in enumerate(productList):
-        line1 = list(" "*length)  #For No; and Name     
-        line2 = list(" "*length)  #For Barcode, Qty, Price, Tax
-        line1[:len(str(count))+1] = f"{count+1})"
-        line1[5:] = i["name"][:25]
-        line2[:len(str(i["barcode"]))+1] = " "+str(i["barcode"])
-        line2[19:22] = str(i["qty"]).center(3)
-        line2[24:30] = str(i["sell_price"]).center(6)
-        if i["tax_value"] : line2[31] = "T"
-        receipt.append("".join(line1))
-        receipt.append("".join(line2))
-        if i["deposit_value"] : receipt.append(" "*7+"BTL/CAN Deposit : "+str(i["deposit_value"]))
-    receipt.append(f"\nSub-Total{' '*8} =  {sub_total}")
-    # if deposit_total: receipt.append(f"Deposit-Amount{' '*3} =  {deposit_total}")
-    if tax_total : receipt.append(f"Tax-Amount{' '*7} =  {tax_total}")
-    receipt.append(("-"*27).center(y))
-    receipt.append(f"Total Sale Amount =  {total_amount}")
-    receipt.append("*"*length)
+        receipt.append(f"{count+1}) {i['name'][:27]}")
+        # Rate = the line's own unit price (tax-exclusive, same figure this
+        # app already shows as "Price" everywhere else); Vat and Total are
+        # this item's own already-computed tax_value/line_total - no new
+        # calculation, just displaying per-line numbers that were already
+        # being tracked but previously only shown in the running totals.
+        rate = i["sell_price"]
+        vat = i["tax_value"]
+        lineTotal = i.get("line_total", round(float(i["qty"])*float(rate) + vat, 2))
+        receipt.append("  {:<5} {:>7} {:>6} {:>8}".format(
+            str(i["qty"]), f"{rate:.2f}" if isinstance(rate,(int,float)) else rate,
+            f"{vat:.2f}" if isinstance(vat,(int,float)) else vat,
+            f"{lineTotal:.2f}" if isinstance(lineTotal,(int,float)) else lineTotal))
+        if i["deposit_value"]: receipt.append("  BTL/CAN Deposit : "+str(i["deposit_value"]))
+        try: discount_total += float(i["discount"]) if i["discount"] else 0
+        except (TypeError, ValueError): pass
+    receipt.append("-"*length)
+
+    receipt.append(_bilingual_line("total_amount", _money(sub_total), y))
+    if discount_total: receipt.append(_bilingual_line("discount", _money(discount_total), y))
+    if tax_total: receipt.append(_bilingual_line("vat", _money(tax_total), y))
+    receipt.append(_bilingual_line("grand_total", _money(total_amount), y))
+    receipt.append("-"*length)
+
+    # Tender/change only make sense for an actual cash payment - card/EBT
+    # transactions pass neither, so these lines are skipped rather than
+    # showing a misleading 0.00/0.00.
+    if cash_tendered is not None and change is not None:
+        receipt.append(_bilingual_line("tender_cash", _money(cash_tendered), y))
+        receipt.append(_bilingual_line("cash_return", _money(change), y))
+        receipt.append("-"*length)
+
+    receipt.append(_LABELS["thank_you_en"].center(y))
+    for _line in _LABELS["thank_you_ar"]: receipt.append(_line.center(y))
     if len(data["Footer Line-1"]) > 1 : receipt.append(data["Footer Line-1"].center(y))
     if len(data["Footer Line-2"]) > 1 : receipt.append(data["Footer Line-2"].center(y))
     return "\n".join(receipt)
@@ -173,7 +257,7 @@ def generateReceipt(transNo,productList, sub_total ,deposit_total, tax_total, to
 # Default shape for the editable store/receipt info. New keys can be appended here
 # in the future and _DEFAULT_DATA.setdefault-merging below will backfill them into
 # any variable.txt saved by an older version of the app, without wiping existing data.
-_DEFAULT_DATA = {"Store Name":"", "Address Line-1":"", "Address Line-2":"", "Store Phone":"",
+_DEFAULT_DATA = {"Store Name":"", "Store Name (Arabic)":"", "Address Line-1":"", "Address Line-2":"", "Store Phone":"",
                   "VAT Number":"", "Additional Heading":"","Footer Line-1":"","Footer Line-2":""}
 
 _corruptVariableFile = False
