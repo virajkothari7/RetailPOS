@@ -29,7 +29,15 @@ jobs:
 
       - name: Install app dependencies
         run: |
-          python -m pip install --upgrade pip
+          # Kivy's published 2.0.0 Windows wheel has a malformed metadata
+          # marker (an extra stray parenthesis in an "extra == 'angle'"
+          # specifier) that pip >=24.1 refuses to parse, so modern pip can't
+          # find/install it at all ("Could not find a version that
+          # satisfies the requirement Kivy==2.0.0" even though the wheel is
+          # right there). Pinning pip below 24.1 for this install restores
+          # the older, more lenient parser - this is pip's own suggested
+          # workaround, not a hack specific to this project.
+          python -m pip install "pip<24.1"
           pip install -r requirements.txt
 
       - name: Install packaging tools
