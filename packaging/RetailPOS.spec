@@ -11,15 +11,41 @@
 # This must be run ON the target OS (Windows build -> run on Windows,
 # macOS build -> run on macOS, etc). PyInstaller does not cross-compile.
 #
-# Note: PyInstaller's own built-in hook-kivy.py is NOT used here - see
-# packaging/pyinstaller_hooks/hook-kivy.py for why (short version: it
-# imports kivy.core.window to work out what to bundle, which tries to
-# create a real window/OpenGL context, and hangs indefinitely instead of
-# failing cleanly on a headless CI runner with no GPU). This spec computes
-# the same information by hand instead and overrides hookspath so
-# PyInstaller never reaches the built-in hook.
+# Note on a subtle Kivy/CI interaction, read before changing anything below:
+#
+# Several things during this spec's OWN execution (not the packaged app's -
+# THIS FILE's, while PyInstaller is analyzing it) end up importing
+# kivy.core.window - PyInstaller's own built-in hook-kivy.py does it via
+# get_deps_minimal(), and collect_submodules("kivy.graphics") /
+# collect_submodules("kivy.core.text") do it too, transitively, since those
+# packages import Window themselves. Importing kivy.core.window makes Kivy
+# actually try to create a window and probe the graphics driver for a real
+# OpenGL context. On a machine with a real GPU that's harmless. On a
+# headless CI runner with only a software/GDI fallback (stuck at OpenGL
+# 1.1, below Kivy's required 2.0), Kivy's window creation doesn't fail
+# cleanly - it hangs indefinitely instead, with no further output. That
+# hang is what stalled the Windows GitHub Actions build for 24+ minutes
+# doing nothing, twice, before this was tracked down (a sys.modules stub
+# to short-circuit the import was tried first and did NOT work - Kivy
+# still reached real window creation some other way, so it's not used
+# here). What actually works is KIVY_GL_BACKEND=mock, set as an
+# environment variable in .github/workflows/build-windows.yml before this
+# spec runs (also set here for anyone invoking pyinstaller directly, e.g.
+# packaging/build_windows.ps1) - it makes Kivy use its own built-in mock
+# graphics backend instead of touching any real driver, confirmed by
+# direct test to create a Window with no hang and no crash. This has zero
+# effect on the packaged app's own runtime behavior on the client's
+# machine: it's only read while analyzing/building, not by the shipped
+# exe, which still uses a real window/GL backend when the client runs it.
+#
+# kivy.core.window's own submodules are still listed by hand further down
+# instead of via collect_submodules() - harmless now that the hang itself
+# is fixed, but avoids the import happening at all for that one case,
+# which keeps this spec's own behavior easy to reason about.
 
 import os
+os.environ.setdefault("KIVY_GL_BACKEND", "mock")
+
 import kivy
 import escpos
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
@@ -50,15 +76,24 @@ kivy_datas = [
 # __import__ at runtime, so PyInstaller's static import scan won't find them
 # on its own - this app has no audio/video/camera, so those providers are
 # deliberately left out to keep the build smaller.
+#
+# kivy.core.window's own submodules are listed by hand rather than via
+# collect_submodules() - that function imports the package it's collecting
+# from in order to list it, and importing kivy.core.window is exactly the
+# thing this whole file is written to avoid (see the note up top). This is
+# the complete provider list Kivy 2.0.0 ships for that package (confirmed
+# from a successful build's own hidden-import log), so nothing is lost.
 kivy_hiddenimports = sorted(set(
     [
         "xml.etree.cElementTree",
         "kivy.core.gl",
         "kivy.weakmethod",
+        "kivy.core.window.window_sdl2",
+        "kivy.core.window.window_pygame",
+        "kivy.core.window.window_egl_rpi",
         "kivy.core.window.window_info",
     ]
     + collect_submodules("kivy.graphics")
-    + collect_submodules("kivy.core.window")
     + collect_submodules("kivy.core.text")
     + collect_submodules("kivy.core.image")
     + collect_submodules("kivy.core.clipboard")

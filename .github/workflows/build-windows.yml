@@ -45,6 +45,18 @@ jobs:
           pip install pyinstaller "kivy_deps.sdl2" "kivy_deps.glew"
 
       - name: Build RetailPOS.exe with PyInstaller
+        env:
+          # Analyzing this app's Kivy dependency makes Kivy try to create a
+          # real window and probe the GPU for an OpenGL context (see the
+          # long comment at the top of packaging/RetailPOS.spec for the
+          # full story) - on this GPU-less runner that hangs indefinitely
+          # instead of failing cleanly, rather than, say, erroring out.
+          # KIVY_GL_BACKEND=mock makes Kivy use its own built-in mock
+          # graphics backend during this step instead, which doesn't touch
+          # any real driver. This only affects this build step; it has no
+          # effect on the packaged exe's own behavior when the client runs
+          # it on their machine.
+          KIVY_GL_BACKEND: mock
         run: |
           pyinstaller packaging/RetailPOS.spec --noconfirm
 
