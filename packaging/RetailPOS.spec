@@ -48,6 +48,7 @@ os.environ.setdefault("KIVY_GL_BACKEND", "mock")
 
 import kivy
 import escpos
+import libusb
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
 block_cipher = None
@@ -64,6 +65,35 @@ kivy_dep_binaries = []
 if os.name == "nt":
     from kivy_deps import sdl2, glew
     kivy_dep_binaries = [Tree(p) for p in (sdl2.dep_bins + glew.dep_bins)]
+
+# libusb-1.0: pyusb/escpos can't talk to any USB device (printer or the
+# Settings screen's device list) without this shared library, and Windows
+# doesn't provide it - confirmed on a real Windows install via the error
+# dialog this app now shows instead of silently doing nothing:
+# "Could not list USB devices: No backend available".
+#
+# Earlier attempt used collect_data_files("libusb") plus reading
+# libusb._platform.DLL_PATH at *runtime* to point pyusb at it - that's
+# exactly what produced the error above: DLL_PATH is computed from
+# os.path.dirname(os.path.abspath(__file__)) inside the libusb package's
+# own module, and PyInstaller does not give every bundled package's
+# modules a real on-disk __file__ that lines up with where
+# collect_data_files placed their data (pure-Python modules normally live
+# inside the frozen PYZ archive, not as loose files) - so at runtime, in
+# the shipped exe, that path resolution silently failed and the except
+# Exception in mainFunc.py fell back to usb_backend = None, same as if
+# libusb had never been bundled at all.
+#
+# Fixed by sidestepping the package's own path logic entirely: resolve
+# the real DLL's location here, at *spec-build time* (this file runs as
+# an ordinary, non-frozen Python process on the build machine, so
+# DLL_PATH is reliable here), and place that one file directly at the
+# bundle root via `binaries` - next to RetailPOS.exe, same as every other
+# top-level file, since contents_directory="." below keeps everything
+# flat. mainFunc.py then builds the path itself from sys.executable's
+# own directory when frozen, instead of importing libusb or trusting its
+# DLL_PATH at runtime at all.
+libusb_binaries = [(libusb._platform.DLL_PATH, ".")] if os.path.isfile(libusb._platform.DLL_PATH) else []
 
 # Kivy's own data/module dirs (fonts, default images, providers) need to
 # ship alongside the exe or windows/widgets render with missing assets.
@@ -124,13 +154,8 @@ kivy_hiddenimports = sorted(set(
 a = Analysis(
     [os.path.join(PROJECT_ROOT, "main.py")],
     pathex=[PROJECT_ROOT],
-    binaries=[],
-    # collect_data_files("libusb") bundles the prebuilt libusb-1.0 shared
-    # library the "libusb" PyPI package ships as plain package data (see the
-    # comment in mainFunc.py next to usb_backend for why this is needed at
-    # all - pyusb/escpos can't talk to any USB device, printer or otherwise,
-    # without it, and Windows doesn't provide it on its own).
-    datas=kivy_datas + collect_data_files("escpos") + collect_data_files("kivymd") + collect_data_files("libusb") + [
+    binaries=libusb_binaries,
+    datas=kivy_datas + collect_data_files("escpos") + collect_data_files("kivymd") + [
         (os.path.join(PROJECT_ROOT, "posapp.kv"), "."),
         (os.path.join(PROJECT_ROOT, "images"), "images"),
         (os.path.join(PROJECT_ROOT, "fonts"), "fonts"),

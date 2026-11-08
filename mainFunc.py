@@ -2,7 +2,7 @@ import databaseScripts.inventory as inv
 import databaseScripts.allTransactions as at
 import databaseScripts.transactions as ts
 import databaseScripts.shifts as sf
-import sqlite3, os, shutil, ast
+import sqlite3, os, sys, shutil, ast
 import pandas as pd
 from datetime import datetime
 from escpos.printer import Usb
@@ -13,28 +13,35 @@ global data, tabs, shift,variableButtons, printerSettings
 
 # pyusb needs an actual libusb-1.0 shared library to talk to any USB device
 # (the receipt printer, and the device list on the Settings screen) - it is
-# not something Windows ships, and PyInstaller can't discover it on its own
-# since nothing `import`s it directly (pyusb loads it by name via ctypes at
-# runtime). Without it, usb.core.find() raises NoBackendError, which was
-# being silently swallowed wherever it's called, showing up to the user as
-# "nothing happens" when opening the printer dropdown or trying to print -
-# confirmed to be the cause by reading pyusb's own backend-loading code,
-# which (with no explicit backend passed) never looks next to our own exe,
-# only the OS's standard library search path.
+# not something Windows ships, and without it usb.core.find() raises
+# NoBackendError ("No backend available") - confirmed live on a real
+# Windows install via the error dialog this app now shows instead of
+# silently doing nothing.
 #
-# The "libusb" PyPI package exists specifically to solve this: it bundles
-# the official prebuilt libusb-1.0 binary for Windows/macOS/Linux as plain
-# package data (libusb._platform.DLL_PATH points at the right one for the
-# running OS/architecture), so pointing pyusb's backend at that file makes
-# USB work without requiring the user to install anything separately or run
-# Zadig at all - the WinUSB/libusb-win32 driver swap users normally have to
-# do by hand is only needed because Windows' default USB-class driver (or
-# none at all for most scanners) won't let a userspace library like libusb
-# open the device directly; bundling the library itself is a separate,
-# unrelated requirement and doesn't remove that step for the printer.
+# A first attempt bundled the "libusb" PyPI package's prebuilt binary via
+# PyInstaller's collect_data_files() and pointed pyusb at it using
+# libusb._platform.DLL_PATH *at runtime* - that still hit "No backend
+# available" on Windows: DLL_PATH is computed from
+# os.path.dirname(os.path.abspath(__file__)) inside the libusb package's
+# own module, and that doesn't reliably resolve to a real path once the
+# module is running frozen inside a PyInstaller bundle (pure-Python
+# modules normally live inside the frozen app's zipped archive, not as
+# loose files on disk at the location data files were placed).
+#
+# Fixed by not trusting libusb's own path logic at runtime at all: the
+# packaging spec resolves the real DLL at *build* time (a normal,
+# non-frozen Python process, where DLL_PATH is reliable) and places that
+# one file directly next to RetailPOS.exe. Here, when frozen, the path is
+# built directly from sys.executable's own directory - no import of
+# libusb needed at runtime. Only the dev/source (non-frozen) path still
+# imports libusb directly, for local testing without a build step.
 try:
-    import libusb
-    usb_backend = usb.backend.libusb1.get_backend(find_library=lambda x: libusb._platform.DLL_PATH)
+    if getattr(sys, "frozen", False):
+        _dll_path = os.path.join(os.path.dirname(sys.executable), "libusb-1.0.dll")
+    else:
+        import libusb
+        _dll_path = libusb._platform.DLL_PATH
+    usb_backend = usb.backend.libusb1.get_backend(find_library=lambda x: _dll_path)
 except Exception:
     usb_backend = None
 
