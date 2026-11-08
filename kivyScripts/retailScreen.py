@@ -102,7 +102,7 @@ class RetailScreen(MDScreen):
                 for name,barcode,department,purchase_price,sales_price,qty,tax,deposit in items:
                     grid.add_widget(
                         Button(halign='center',valign='center',background_color=random.choice(colors),
-                            text=f"{name[:16]}\n${sales_price}", text_size=(Window.width*0.1,Window.height*0.1),
+                            text=f"{name[:16]}\n{sales_price} AED", text_size=(Window.width*0.1,Window.height*0.1),
                             size_hint=[1,None],height=Window.height*0.12,on_press=partial(self.keyBarcode,barcode)),
                     )
             else:
@@ -139,7 +139,7 @@ class RetailScreen(MDScreen):
     
     def update_label(self,st,tx,ttl):
         if all([st,ttl]):
-            self.label.text = f"  Sub-Total  :      {st}\n{' '*11} Tax  :      {tx}\n{'-'*int(Window.width*0.0335)}\n[b]{' '*5}TOTAL   :      {ttl}[/b]"
+            self.label.text = f"  Sub-Total  :      {st} AED\n{' '*11} Tax  :      {tx} AED\n{'-'*int(Window.width*0.0335)}\n[b]{' '*5}TOTAL   :      {ttl} AED[/b]"
         else:
             self.label.text = f"  Sub-Total  :  \n{' '*11} Tax  :  \n{'-'*int(Window.width*0.0335)}\n[b]{' '*5}TOTAL   :  [/b]"
     
@@ -437,7 +437,7 @@ class RetailScreen(MDScreen):
     def lookUpEnter(self,widget,*args):
         barcode = widget.text.strip()
         if inv.isBarcode(barcode):
-            self.sv.add_widget( MDLabel(text = f"{barcode}\n{inv.getNameFromBarcode(barcode)}\n\nPrice : {inv.getSellPriceFromBarcode(barcode)}",halign = "center",
+            self.sv.add_widget( MDLabel(text = f"{barcode}\n{inv.getNameFromBarcode(barcode)}\n\nPrice : {inv.getSellPriceFromBarcode(barcode)} AED",halign = "center",
                             pos_hint={'x':0.05,'y':0.175},size_hint=[0.9,0.6], font_style = "H6" ) )
             self.sv.add_widget(MDRaisedButton(text="Add\nItem",font_style="H6",on_press = partial(self.add_cart,barcode,None),pos_hint={'x':0.7,'y':0.7},size_hint=[0.265,0.25]))
 
@@ -522,14 +522,14 @@ class RetailScreen(MDScreen):
                         if self.dialog:
                             self.remove_widget(self.dialog)
                             self.dialog = None
-                        self.dialog = MDDialog( title=f"""\n Sub-Total  :      {round(total-tax,2)}\n{' '*11} Tax  :      {tax}\n{'-'*int(Window.width*0.0265)}\n[b]{' '*5}TOTAL   :      {total}\n\n{' '*7}CASH   :      {value}\n\n\nCHANGE : \n\n{' '*25}{round(value-total,2)}[/b]""",
+                        self.dialog = MDDialog( title=f"""\n Sub-Total  :      {round(total-tax,2)} AED\n{' '*11} Tax  :      {tax} AED\n{'-'*int(Window.width*0.0265)}\n[b]{' '*5}TOTAL   :      {total} AED\n\n{' '*7}CASH   :      {value} AED\n\n\nCHANGE : \n\n{' '*25}{round(value-total,2)} AED[/b]""",
                                             size=[Window.width*0.4,Window.height*0.7],size_hint=[None,None],)
                         self.dialog.open()
                     else:
                         if self.dialog:
                             self.remove_widget(self.dialog)
                             self.dialog = None
-                        self.dialog = MDDialog( title=f"""\n Sub-Total  :      {round(total-tax,2)}\n{' '*11} Tax  :      {tax}\n{'-'*int(Window.width*0.0265)}\n[b]{' '*5}TOTAL   :      {total}\n\n\n\nCASH : \n\n{' '*25}{total}[/b]""",
+                        self.dialog = MDDialog( title=f"""\n Sub-Total  :      {round(total-tax,2)} AED\n{' '*11} Tax  :      {tax} AED\n{'-'*int(Window.width*0.0265)}\n[b]{' '*5}TOTAL   :      {total} AED\n\n\n\nCASH : \n\n{' '*25}{total} AED[/b]""",
                                             size=[Window.width*0.4,Window.height*0.7],size_hint=[None,None],)
                         self.dialog.open()
                 else:
@@ -555,8 +555,16 @@ class RetailScreen(MDScreen):
         change = round(cashTendered - total, 2) if cashTendered is not None else None
         detailDict['receipt'] = generateReceipt(detailDict['transaction_id'],detailDict['products'],detailDict['total_amount'] ,round(self.cart["deposit_value"].sum(),2),detailDict['tax_amount'],detailDict['total_sale'],
             cash_tendered=cashTendered, change=change)
+        # ts.addData() already decrements inventory qty itself, per product,
+        # via allTransactions.addData() -> inventory.decreaseQuantity() -
+        # confirmed live by watching inventory.db change after a sale. A
+        # second decreaseQuantity() call was added here under the mistaken
+        # belief this step was missing; it wasn't, and that duplicate call
+        # was silently double-counting every sale (caught via a before/after
+        # qty check: -4 for a qty-2 sale instead of -2). Do not re-add a
+        # decrement call in this function.
         ts.addData(detailDict)
-        
+
         if printer.printer is None: printer.connectPrinter() 
         # Printing Receipt Here if on printeer Connected and Auto Print True
         if printer.printer and printerSettings["Print_Reciept"]: printer.printReciept(detailDict['receipt'])

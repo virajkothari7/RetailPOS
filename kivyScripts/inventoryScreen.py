@@ -348,7 +348,8 @@ class InventoryScreen(MDScreen):
                 if i == "Barcode":
                     continue
                 stack.add_widget(MDLabel(text=f"[b]{i} : [/b]",font_size=fontsize['label'],markup=True,valign="center"))
-                stack.add_widget(MDLabel(text=f"{j}",font_size=fontsize['label'],markup=True,valign="center"))
+                suffix = " AED" if i in ("Purchase Price","Selling Price") else ""
+                stack.add_widget(MDLabel(text=f"{j}{suffix}",font_size=fontsize['label'],markup=True,valign="center"))
                 if i not in ["Department Category","Tax Category","Deposit Category"]:
                     columnData[i] = MDTextField(hint_text=f"Enter {i} Here... ",mode="rectangle")
                     if i in ["Purchase Price","Selling Price","Quantity"]: columnData[i].input_filter = "float"
@@ -555,7 +556,8 @@ class InventoryScreen(MDScreen):
         layout = MDGridLayout(cols = 2, adaptive_height= True,row_force_default =True,row_default_height=100,padding=[80,25,5,35])
         for i in zip(columns,plist):
             layout.add_widget(MDLabel(text = f"[b]{i[0]} : [/b]",markup=True))
-            layout.add_widget(MDLabel(text = f"{i[1]}"))
+            suffix = " AED" if i[0] in ("Purchase Price","Selling Price") else ""
+            layout.add_widget(MDLabel(text = f"{i[1]}{suffix}"))
         return layout
     #Window.bind(on_keyboard = self.deleteEnter)
 

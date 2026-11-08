@@ -85,6 +85,7 @@ class ReportsScreen(MDScreen):
             except: j = shift["Shift No"]
             shiftDetails = shifts.getDataFromShiftID(j)
             shiftReport = "SHIFT Report".center(32)+"\n"+str(datetime.now()).center(32)+"\n"
+            shiftReport += "(Amounts in AED)".center(32)+"\n"
             shiftReport += f"{'*'*32}\n\nSHIFT ID : {j}\nStart_DT : {shiftDetails[0][:-7]}\nEnd_DT : {shiftDetails[1][:-7]}\n{shiftDetails[2]}\n\nDEPARTMENT DETAILS"
             for k in group.get_group(j).groupby("DEPARTMENT").groups.keys():
                 shiftReport += "\n    "+k+f" {inv.getNameFromId(k)[:13]}\n"
@@ -108,7 +109,7 @@ class ReportsScreen(MDScreen):
                     cashOut.append(f"  {a[0][:20]}   {a[1]}")
                     cashOutTotal += a[1]
             if cashOutTotal: 
-                shiftReport += "\nCASH-OUT DETAILS\n"+ '\n'.join(cashOut) + "\n" + f"TOTAL AMOUNT   {cashOutTotal}".rjust(24) + "\n"
+                shiftReport += "\nCASH-OUT DETAILS\n"+ '\n'.join(cashOut) + "\n" + f"TOTAL AMOUNT   {cashOutTotal} AED".rjust(24) + "\n"
             if noSale : shiftReport += f"\nNO SALE DRAWER OPEN   {noSale}\n"
             shiftReport += "\n"+"#"*32+"\n"+"END OF REPORT".center(32)
             # print(shiftReport)
@@ -159,7 +160,7 @@ class ReportsScreen(MDScreen):
         cols = dataValues.columns.values.tolist()
         
         #Building Printable Report 
-        report = "DAY Report".center(32)+"\n"+str(datetime.now()).center(32)+"\n"
+        report = "DAY Report".center(32)+"\n"+str(datetime.now()).center(32)+"\n"+"(Amounts in AED)".center(32)+"\n"
         group_df = data.groupby([data["DATE-RANGE"].dt.to_period('D')])
         for i in group_df.groups.keys():
             dayReport = f"\n{'#'*32}\n"+f"Date : {i}".center(32)
@@ -193,7 +194,7 @@ class ReportsScreen(MDScreen):
                         cashOut.append(f"  {a[0][:20]}   {a[1]}")
                         cashOutTotal += a[1]
                 if cashOutTotal: 
-                    shiftReport += "\nCASH-OUT DETAILS\n"+ '\n'.join(cashOut) + "\n" + f"TOTAL AMOUNT   {cashOutTotal}".rjust(24) + "\n"
+                    shiftReport += "\nCASH-OUT DETAILS\n"+ '\n'.join(cashOut) + "\n" + f"TOTAL AMOUNT   {cashOutTotal} AED".rjust(24) + "\n"
                 if noSale : shiftReport += f"\nNO SALE DRAWER OPEN   {noSale}\n"
             
                 dayReport += "\n"+ shiftReport

@@ -130,6 +130,11 @@ def endShift(*args):
     j = shift["Shift No"]
     shiftDetails = sf.getDataFromShiftID(j)
     shiftReport = "SHIFT Report".center(32)+"\n"+str(datetime.now()).center(32)+"\n"
+    # Every money figure below comes out of pandas .to_string() tables with
+    # fixed column widths - appending "AED" to each value would break their
+    # alignment, so (same approach as the receipt) this one note up top
+    # covers all of them instead.
+    shiftReport += "(Amounts in AED)".center(32)+"\n"
     shiftReport += f"{'*'*32}\n\nSHIFT ID : {j}\nStart_DT : {shiftDetails[0][:-7]}\nEnd_DT : {endTime[:-7]}\n{shiftDetails[2]}\n"
     
     try:
@@ -160,7 +165,7 @@ def endShift(*args):
             cashOut.append(f"  {a[0][:20]}   {a[1]}")
             cashOutTotal += a[1]
     if cashOutTotal: 
-        shiftReport += "\nCASH-OUT DETAILS\n"+ '\n'.join(cashOut) + "\n" + f"TOTAL AMOUNT   {cashOutTotal}".rjust(24) + "\n"
+        shiftReport += "\nCASH-OUT DETAILS\n"+ '\n'.join(cashOut) + "\n" + f"TOTAL AMOUNT   {cashOutTotal} AED".rjust(24) + "\n"
     if noSale : shiftReport += f"\nNO SALE DRAWER OPEN   {noSale}\n"
     shiftReport += "\n"+"#"*32+"\n"+"END OF REPORT".center(32)
     # print(shiftReport)
@@ -211,7 +216,7 @@ def _bilingual_line(key, value, y):
 
 
 def _money(value):
-    try: return f"{float(value):.2f}"
+    try: return f"{float(value):.2f} AED"
     except (TypeError, ValueError): return str(value)
 
 
@@ -230,6 +235,12 @@ def generateReceipt(transNo, productList, sub_total, deposit_total, tax_total, t
 
     receipt.append(_LABELS["tax_invoice"][0].center(y))
     receipt.append(_LABELS["tax_invoice"][1].center(y))
+    # The per-line Rate/VAT/Total columns below are fixed-width (narrow
+    # thermal-paper columns, no room to append "AED" to each one without
+    # breaking alignment) - this one-line note covers them, while the
+    # summary totals further down (which go through _money()) spell out
+    # "AED" on every line since they have the room.
+    receipt.append("(Amounts in AED)".center(y))
     if len(data.get("VAT Number","")) > 1:
         receipt.append(_bilingual_line("vat_no", data["VAT Number"], y))
     receipt.append("-"*length)
