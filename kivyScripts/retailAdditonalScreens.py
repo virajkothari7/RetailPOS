@@ -112,15 +112,24 @@ class buttonSettings(MDScreen):
                 self.popup = None
         text = widget.text.strip()
         if text.split("\n")[1] == "Add Item":
-            self.popup = MDDialog( title= "What type of Item you would like to associate with this Entry",size_hint=[0.4,None],
+            # size_hint was 0.4 with font_size=40 on the buttons below - on
+            # smaller/narrower windows those two side-by-side buttons render
+            # wider than the dialog's own button row, so the visible text
+            # overflows past its real (narrow) touch target: tapping what
+            # looks like "Barcode Entry" can silently miss, or land on
+            # "Variable Entry" instead. Using fontsize['button'] (the same
+            # resolution-scaled size every other button in the app uses)
+            # keeps the rendered text inside its actual widget bounds, and
+            # widening the dialog gives the two-button row enough room.
+            self.popup = MDDialog( title= "What type of Item you would like to associate with this Entry",size_hint=[0.6,None],
                 text = "\nBarcode Entry means fixed price Items.\n\nVariable Entry means variable price for given Item.\n",
-                buttons = [MDRaisedButton(text= "Barcode Entry",font_size= 40,on_press = partial(self.addBarcode,text.split("\n")[0] )),
-                        MDRaisedButton(text="Variable Entry",md_bg_color=[0.10,0.200,0.200,0.5],font_size= 40,on_press = partial(self.addVariableItem,text.split("\n")[0]) ) ] 
+                buttons = [MDRaisedButton(text= "Barcode Entry",font_size= fontsize['button'],on_press = partial(self.addBarcode,text.split("\n")[0] )),
+                        MDRaisedButton(text="Variable Entry",md_bg_color=[0.10,0.200,0.200,0.5],font_size= fontsize['button'],on_press = partial(self.addVariableItem,text.split("\n")[0]) ) ]
             )
             self.popup.open()
         else:
-            self.popup = MDDialog( title= "Clear or Delete this button space", text= "\nThis will reset the button to default...[Add Item]\n",size_hint=[0.25,None],
-                buttons= [MDRaisedButton(text= "CLEAR/RESET",font_size= 48,md_bg_color= [0.255,0,0,1],on_press = partial(self.delItem,text.split("\n")[0]))] )
+            self.popup = MDDialog( title= "Clear or Delete this button space", text= "\nThis will reset the button to default...[Add Item]\n",size_hint=[0.35,None],
+                buttons= [MDRaisedButton(text= "CLEAR/RESET",font_size= fontsize['button'],md_bg_color= [0.255,0,0,1],on_press = partial(self.delItem,text.split("\n")[0]))] )
             self.popup.open()
     
     def delItem(self,btnId,*args):

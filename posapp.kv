@@ -33,7 +33,7 @@
         size_hint: 0.3 , 0.15
         pos_hint : {"x":0.625,"y":0.325}  
         md_bg_color : [0.128,0.128,0.128,1]
-        font_size: 48
+        font_size: ((root.width**2 + root.height**2) / 16.5**4)
         mode : "fill"
         on_text_validate : root.startShift()
 
@@ -43,7 +43,7 @@
         text: "[b]START SHIFT[/b]"
         markup : True
         background_color : [0.128,0.128,0.128,1]
-        font_size : 58
+        font_size : ((root.width**2 + root.height**2) / 18**4)
         on_press: root.startShift()
         
     
