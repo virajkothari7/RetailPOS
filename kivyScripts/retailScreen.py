@@ -80,24 +80,39 @@ class RetailScreen(MDScreen):
         for i in buttons:
             self.layout.add_widget(i)
         
+        # Department-browse Quick-Add panel: one tab per Department Category
+        # (set up in Inventory > Department Category - nothing extra to
+        # configure), each tab listing every product currently assigned to
+        # that department as a tap-to-add tile. This replaced the old
+        # manually-assigned Tab1/2/3 slot system - a product shows up here
+        # the moment it's added to Inventory with that department, instead
+        # of needing a separate "shortcut" assignment step per product.
         colors=["orange","whitesmoke","brown","lightblue","yellow","green","violet","purple","maroon","blue","white","lightgreen"]
         random.seed(22)
         quickAdd = MDRelativeLayout(pos_hint = {"x":0.625,"y":0.225},md_bg_color=[0.128,0.128,0,0.25],size_hint=[0.375,0.675],)
         tabPanel = MDTabs(background_color=[0.128,0.128,0,0.75],tab_bar_height=Window.height*0.1,size_hint=[1,1],md_bg_color=[0.128,0.128,0,0.25])
-        for num,i in enumerate(tabs):
-            titleName = i[0] if i[0] else f"Tab {num+1}"
-            i[1] = Tab(title=titleName,cols = 3,padding = 15,spacing=[7,3],pos_hint={"x":0,"y":0},size_hint=[1,1],)
-            for n,j in  enumerate(at.getTab(f"Tab{num+1}")):
-                # if n<12:
-                if j[2] == "Add Item":
-                    i[1].add_widget(
-                            MDLabel(halign='center',valign='center',text= f"{j[2]}", text_size=(Window.width*0.1,Window.height*0.1), size_hint=[1,1]),
-                        )
-                else:
-                    i[1].add_widget(
-                            Button(halign='center',valign='center',background_color=random.choice(colors),text= f"{j[2]}", text_size=(Window.width*0.1,Window.height*0.1), size_hint=[1,1],on_press=partial(self.keyBarcode,j[3])),
-                        )
-            tabPanel.add_widget(i[1])
+        for dept in inv.getCategory("Department_Category"):
+            deptId, deptName = dept[2], dept[3]
+            tab = Tab(title=deptName,cols=1,padding=0,spacing=0,pos_hint={"x":0,"y":0},size_hint=[1,1],)
+            sv = ScrollView(size_hint=[1,1],do_scroll_x=False,scroll_type=['bars','content'],bar_width="8dp")
+            grid = MDGridLayout(cols=3,size_hint=(1,None),adaptive_height=True,spacing=[7,7],padding=[10,10,10,10])
+            grid.bind(minimum_height=grid.setter('height'))
+            items = inv.getItemsByDepartment(deptId)
+            if items:
+                for name,barcode,department,purchase_price,sales_price,qty,tax,deposit in items:
+                    grid.add_widget(
+                        Button(halign='center',valign='center',background_color=random.choice(colors),
+                            text=f"{name[:16]}\n${sales_price}", text_size=(Window.width*0.1,Window.height*0.1),
+                            size_hint=[1,None],height=Window.height*0.12,on_press=partial(self.keyBarcode,barcode)),
+                    )
+            else:
+                grid.add_widget(
+                    MDLabel(halign='center',valign='center',text="No products in this department yet",
+                        text_size=(Window.width*0.3,Window.height*0.1), size_hint=[1,None],height=Window.height*0.12),
+                )
+            sv.add_widget(grid)
+            tab.add_widget(sv)
+            tabPanel.add_widget(tab)
         quickAdd.add_widget(tabPanel)
         self.layout.add_widget(quickAdd)
 

@@ -208,6 +208,19 @@ def getQtyFromBarcode(barcode_number):
 
 
 
+# Fetching all items that belong to a given department (category_id, e.g.
+# "Department_1"), ordered by name - used to browse a department's products
+# on the POS screen's Quick-Add panel.
+def getItemsByDepartment(department):
+    param = (department,)
+    try:
+        b = c.execute("SELECT * FROM items WHERE department = (?) ORDER BY name", param)
+        return list(b.fetchall())
+    except Exception:
+        return []
+
+
+
 # Fetching barcodes from Name alike
 def getItemsFromName(name):
     param = (f"%{name}%",)
