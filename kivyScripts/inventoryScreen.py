@@ -324,10 +324,16 @@ class InventoryScreen(MDScreen):
                 self.layout.remove_widget(self.sv)
                 self.sv = None 
             
-            self.sv = ScrollView(size_hint=[1,None],pos_hint={'x':0,'y':0},scroll_type=['bars','content'], 
-                        do_scroll_x = False,size=(Window.width/2, Window.height/1.8),bar_width="7dp")
+            self.sv = ScrollView(size_hint=[1,None],pos_hint={'x':0,'y':0},scroll_type=['bars','content'],
+                        do_scroll_x = False,size=(Window.width, Window.height/1.8),bar_width="7dp")
+            # 4 fixed-width columns with horizontal spacing/padding between
+            # them: the column width has to leave room for those, or the
+            # rightmost column (the "Update" buttons) renders past the edge
+            # of the window with no way to scroll to it, since do_scroll_x
+            # is off. 235 = 3 horizontal gaps of 65 (spacing[0]) + 20+20
+            # left/right padding (padding[0]/padding[2]).
             stack = MDGridLayout(size_hint=(1,None),cols = 4, row_force_default =True,row_default_height=Window.height/12.75,
-                        col_force_default =True,col_default_width=Window.width/4.70,padding = [20,30,20,20],spacing=[65,30])
+                        col_force_default =True,col_default_width=(Window.width-235)/4,padding = [20,30,20,20],spacing=[65,30])
             stack.bind(minimum_height=stack.setter('height'))
             
             columns = ["Name","Barcode","Department Category","Purchase Price","Selling Price","Quantity","Tax Category","Deposit Category"]
