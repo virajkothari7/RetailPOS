@@ -30,10 +30,17 @@ class SettingsScreen(MDScreen):
         self.file_manager = MDFileManager( exit_manager = self.exit_fileManager, select_path = self.select_filePath, )
 
         try:
-            for cfg in usb.core.find(find_all=True):
-                self.devices.append([cfg.manufacturer , cfg.product ,str(cfg.idVendor), str(cfg.idProduct)] )
+            found = usb.core.find(find_all=True, backend=usb_backend) if usb_backend else usb.core.find(find_all=True)
+            for cfg in found:
+                # A single device raising while reading its string
+                # descriptors (seen on Windows for devices held by another
+                # driver) shouldn't blank out every other device in the list.
+                try:
+                    self.devices.append([cfg.manufacturer , cfg.product ,str(cfg.idVendor), str(cfg.idProduct)] )
+                except Exception:
+                    pass
         except Exception as e:
-                print(e)
+            MDDialog(title="!!!   ERROR   !!!",text=f"Could not list USB devices:\n\n{e}").open()
 
         dropdown1 = DropDown()
         for i, idx in enumerate(self.devices):

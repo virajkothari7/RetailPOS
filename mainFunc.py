@@ -7,8 +7,36 @@ import pandas as pd
 from datetime import datetime
 from escpos.printer import Usb
 from kivyScripts.screenManager import sm
+import usb.backend.libusb1
 
 global data, tabs, shift,variableButtons, printerSettings
+
+# pyusb needs an actual libusb-1.0 shared library to talk to any USB device
+# (the receipt printer, and the device list on the Settings screen) - it is
+# not something Windows ships, and PyInstaller can't discover it on its own
+# since nothing `import`s it directly (pyusb loads it by name via ctypes at
+# runtime). Without it, usb.core.find() raises NoBackendError, which was
+# being silently swallowed wherever it's called, showing up to the user as
+# "nothing happens" when opening the printer dropdown or trying to print -
+# confirmed to be the cause by reading pyusb's own backend-loading code,
+# which (with no explicit backend passed) never looks next to our own exe,
+# only the OS's standard library search path.
+#
+# The "libusb" PyPI package exists specifically to solve this: it bundles
+# the official prebuilt libusb-1.0 binary for Windows/macOS/Linux as plain
+# package data (libusb._platform.DLL_PATH points at the right one for the
+# running OS/architecture), so pointing pyusb's backend at that file makes
+# USB work without requiring the user to install anything separately or run
+# Zadig at all - the WinUSB/libusb-win32 driver swap users normally have to
+# do by hand is only needed because Windows' default USB-class driver (or
+# none at all for most scanners) won't let a userspace library like libusb
+# open the device directly; bundling the library itself is a separate,
+# unrelated requirement and doesn't remove that step for the printer.
+try:
+    import libusb
+    usb_backend = usb.backend.libusb1.get_backend(find_library=lambda x: libusb._platform.DLL_PATH)
+except Exception:
+    usb_backend = None
 
 
 from escpos.printer import Usb
@@ -41,7 +69,9 @@ class printer:
             printer.printReciept(printText)
 
     def connectPrinter():
-        try : printer.printer = Usb(int(printerSettings['Printer_VendorID']),int(printerSettings['Printer_ProductID']))
+        try:
+            usb_args = {"backend": usb_backend} if usb_backend else None
+            printer.printer = Usb(int(printerSettings['Printer_VendorID']),int(printerSettings['Printer_ProductID']),usb_args=usb_args)
         except Exception as e:
             printer.printer = None
 

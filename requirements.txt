@@ -3,4 +3,5 @@ kivymd==0.104.2
 pandas>=2.0
 python-escpos>=3.0
 pyusb==1.2.1
+libusb>=1.0.27
 openpyxl>=3.0

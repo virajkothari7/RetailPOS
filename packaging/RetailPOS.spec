@@ -125,7 +125,12 @@ a = Analysis(
     [os.path.join(PROJECT_ROOT, "main.py")],
     pathex=[PROJECT_ROOT],
     binaries=[],
-    datas=kivy_datas + collect_data_files("escpos") + collect_data_files("kivymd") + [
+    # collect_data_files("libusb") bundles the prebuilt libusb-1.0 shared
+    # library the "libusb" PyPI package ships as plain package data (see the
+    # comment in mainFunc.py next to usb_backend for why this is needed at
+    # all - pyusb/escpos can't talk to any USB device, printer or otherwise,
+    # without it, and Windows doesn't provide it on its own).
+    datas=kivy_datas + collect_data_files("escpos") + collect_data_files("kivymd") + collect_data_files("libusb") + [
         (os.path.join(PROJECT_ROOT, "posapp.kv"), "."),
         (os.path.join(PROJECT_ROOT, "images"), "images"),
         (os.path.join(PROJECT_ROOT, "fonts"), "fonts"),
