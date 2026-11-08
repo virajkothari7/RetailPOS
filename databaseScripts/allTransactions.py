@@ -1,5 +1,4 @@
 import sqlite3, os
-import databaseScripts.inventory as inventory
 from datetime import datetime, timedelta
 
 os.makedirs('./data', exist_ok=True)
@@ -32,15 +31,14 @@ c.execute("""CREATE TABLE IF NOT EXISTS all_transactions(
 # adding data function which will be called from main to add transactions into the database
 #Need to add try catch and all other values also I think we should cosider subtracting from inventory here
 def addData(date_time,date,transaction_id,shift_id,barcode,name, department,purchase_price,sales_price, qty,deposit,deposit_value, tax,tax_value,discount, payment_type):
+    # Note: this `qty` is units sold in this transaction line (kept, still
+    # used by Reports' Net_QTY) - it used to also call
+    # inventory.decreaseQuantity() to decrement stock-on-hand, which was
+    # removed along with stock-on-hand tracking entirely.
     try:
         params = (date_time, date, transaction_id, shift_id, barcode, name, department,purchase_price, sales_price, qty, deposit,deposit_value, tax,tax_value,discount,payment_type)
         c.execute("INSERT INTO all_transactions VALUES (?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", params)
         conn.commit()
-        try:
-            inventory.decreaseQuantity(barcode,qty)
-        except Exception as b :
-            with open('errorLog',"a") as file:
-                file.write(f"\Error Deleting Qty : {datetime.now()}\n Parameters : {params}\n{b}\n\n")
     except Exception as e:
         with open('errorLog',"a") as file:
             file.write(f"\All Transactions Error : {datetime.now()}\naddData Params : {params}\n{e}\n\n")

@@ -555,14 +555,10 @@ class RetailScreen(MDScreen):
         change = round(cashTendered - total, 2) if cashTendered is not None else None
         detailDict['receipt'] = generateReceipt(detailDict['transaction_id'],detailDict['products'],detailDict['total_amount'] ,round(self.cart["deposit_value"].sum(),2),detailDict['tax_amount'],detailDict['total_sale'],
             cash_tendered=cashTendered, change=change)
-        # ts.addData() already decrements inventory qty itself, per product,
-        # via allTransactions.addData() -> inventory.decreaseQuantity() -
-        # confirmed live by watching inventory.db change after a sale. A
-        # second decreaseQuantity() call was added here under the mistaken
-        # belief this step was missing; it wasn't, and that duplicate call
-        # was silently double-counting every sale (caught via a before/after
-        # qty check: -4 for a qty-2 sale instead of -2). Do not re-add a
-        # decrement call in this function.
+        # Stock-on-hand quantity tracking was removed entirely, including
+        # the inventory.decreaseQuantity() call ts.addData() used to make
+        # (via allTransactions.addData()) on every sale. Do not re-add a
+        # decrement call here.
         ts.addData(detailDict)
 
         if printer.printer is None: printer.connectPrinter() 

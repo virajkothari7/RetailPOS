@@ -35,20 +35,24 @@ class InventoryScreen(MDScreen):
         self.main = Button(pos_hint = {"x":0,"y":0},size_hint=[ 0.15,  0.125], text= "[b]Back[/b]", markup = True, font_size = fontsize['button'],
         on_press = self.on_leave)
         self.add_widget(self.main)
+        # "Add New Inventory" (restocking an existing product's on-hand
+        # quantity) was removed along with stock-on-hand quantity tracking
+        # entirely - New Product no longer asks for or stores a quantity,
+        # so there's nothing for this screen to add to. The remaining 6
+        # buttons are recentered into the vertical space that button used
+        # to occupy, same 2x3 layout otherwise.
         self.buttons = [
-            MDRaisedButton( pos_hint = {"x":0.25,"y":0.6175}, size_hint = [0.5, 0.15] , on_press=self.newInventory,
-                text= "Add New Inventory", font_style = "H5", font_size = fontsize['label'], md_bg_color= [0.144,0.238,0.144,0.65] ),
-            MDRaisedButton( pos_hint = {"x":0.05,"y":0.4}, size_hint = [0.25, 0.1],on_press=self.newProduct,
+            MDRaisedButton( pos_hint = {"x":0.05,"y":0.5}, size_hint = [0.25, 0.1],on_press=self.newProduct,
                 text="New Product" , font_style="Subtitle1" , md_bg_color= [0,0.255,0,0.75] ),
-            MDRaisedButton( pos_hint = {"x":0.375,"y":0.4}, size_hint = [0.25, 0.1],on_press=self.updateProduct,
+            MDRaisedButton( pos_hint = {"x":0.375,"y":0.5}, size_hint = [0.25, 0.1],on_press=self.updateProduct,
                 text= "Update Product", font_style="Subtitle1", md_bg_color= [0.139,0.69,0.19,0.75] ),
-            MDRaisedButton( pos_hint = {"x":0.05,"y":0.23}, size_hint = [0.25, 0.1],on_press=self.deleteProduct,
+            MDRaisedButton( pos_hint = {"x":0.05,"y":0.33}, size_hint = [0.25, 0.1],on_press=self.deleteProduct,
                 text= "Delete Product",  font_style="Subtitle1", md_bg_color= [0.255,0,0,0.75] ),
-            MDRaisedButton( pos_hint = {"x":0.375,"y":0.23}, size_hint = [0.25, 0.1],on_press=self.lookUpProduct,
+            MDRaisedButton( pos_hint = {"x":0.375,"y":0.33}, size_hint = [0.25, 0.1],on_press=self.lookUpProduct,
                 text= "Look-Up Product", font_style="Subtitle1", md_bg_color= [0.120,0.220,0.220,0.5] ),
-            MDRaisedButton( pos_hint = {"x":0.7,"y":0.4}, size_hint = [0.25, 0.1],on_press=self.department,
+            MDRaisedButton( pos_hint = {"x":0.7,"y":0.5}, size_hint = [0.25, 0.1],on_press=self.department,
                 text= "Department Category", font_style="Subtitle1", md_bg_color= [0.120,0.220,0.220,0.25] ),
-            MDRaisedButton( pos_hint = {"x":0.7,"y":0.23}, size_hint = [0.25, 0.1],on_press=self.taxandDeposit,
+            MDRaisedButton( pos_hint = {"x":0.7,"y":0.33}, size_hint = [0.25, 0.1],on_press=self.taxandDeposit,
                 text= "Tax / Deposit Category", font_style="Subtitle1", md_bg_color= [0.120,0.220,0.220,1] ),
         ]
 
@@ -103,78 +107,13 @@ class InventoryScreen(MDScreen):
         self.dialog.dismiss(force=True)
 
     def getLabel(self,y, *args):
-        x= {"add":"Add New Inventory","new":"New Product","update":"Update Product", "delete":"Delete Product","look":"Look-Up Product","department":"Department Categories","tax_deposit":"Tax and Deposit Categories"}
+        x= {"new":"New Product","update":"Update Product", "delete":"Delete Product","look":"Look-Up Product","department":"Department Categories","tax_deposit":"Tax and Deposit Categories"}
         self.label = MDLabel(pos_hint = {"x":0.149,"y":0},size_hint=[ 0.702,  0.125],halign= "center",
                 text= x[y], font_style="H4", md_bg_color= [0.120,0.120,0.120,0.35] )
         self.mainmenu = Button(pos_hint = {"x":0.85,"y":0},size_hint=[ 0.15,  0.125], text= "[b]Main\nMenu[/b]", markup = True, font_size = fontsize['button'],
         on_press = self.on_leave)
         self.add_widget(self.mainmenu)
         self.add_widget(self.label)
-
-
-    # Add New Inventory Code
-    def newInventory(self, *args):
-        self.removeButtons()
-        self.chnageBack()
-        layout = MDRelativeLayout(pos_hint = {"x":0,"y":0.15},size_hint=[1,0.7],)
-        self.barcode = MDTextField(hint_text="Enter or Scan Barcode Here... ",mode="fill",size_hint=[0.35,0.05],
-            pos_hint= {"x":0.05,"y":0.725}, on_text_validate=self.newInventoryEnter )
-        
-        layout.add_widget(self.barcode)
-        layout.add_widget(
-            MDLabel(text="[b] Enter Barcode : [/b]",pos_hint= {"x":0.02,"y":0.915},size_hint=[0.35,0.05],markup=True)
-        )
-        self.layout = layout
-        self.add_widget(self.layout)
-        self.getLabel(y="add")
-
-    def newInventoryEnter(self, *args):
-        barcode = self.barcode.text.strip()
-        self.newInventory()
-        self.barcode.text = barcode
-        if inv.isBarcode(barcode):
-            qty = MDTextField(hint_text="Quantity...",mode="fill",size_hint=[0.2,0.05],
-                    pos_hint= {"x":0.48,"y":0.725}, input_filter = "float")
-            self.layout.add_widget(qty)
-            self.layout.add_widget(
-                MDLabel(text="[b] Enter Additional Qty : [/b]",pos_hint= {"x":0.45,"y":0.915},size_hint=[0.35,0.05],markup=True) )
-            self.layout.add_widget(
-                MDRaisedButton(text='Add Qty',pos_hint={"x":0.75,"y":0.725},font_size=fontsize['button'],
-                    size_hint=[0.25,0.15], on_press= partial(self.newInventoryAdd, barcode, qty ) ) )
-            columns = ["Name","Barcode","Department Category","Purchase Price","Selling Price","Quantity","Tax Category","Deposit Category"]
-            columns = dict(zip(columns,inv.getItemFromBarcode(self.barcode.text.strip())))
-            grid = MDGridLayout(cols=4,pos_hint= {"x":0.04,"y":0.24},size_hint=[0.9,0.4],spacing=[70,20])
-            for i in ["Barcode","Name","Department Category","Selling Price","Tax Category","Purchase Price","Deposit Category","Quantity"]:
-                j = columns[i]
-                grid.add_widget( MDLabel(text=f"[b]{i} : [/b]",markup=True) )
-                grid.add_widget( MDLabel(text=f"{j}",markup=True,halign="right") )
-            self.layout.add_widget(grid)
-            self.layout.add_widget(
-                MDLabel(text="[b]* Only add additional quantity that you are adding as to the inventory.\n      For Example; If new order has 10, add 10 in Quantity that makes Current Qty + 10[/b]",pos_hint= {"x":0.0135,"y":0.085},size_hint=[0.95,0.05],markup=True) )
-            self.layout.add_widget(
-                MDLabel(text="[b]* If you like to update Purchase-Price or Selling-Price do it in [u]Update Product Tab[/u] after adding Quantity [/b]",pos_hint= {"x":0.0135,"y":0.01},size_hint=[0.95,0.05],markup=True) )
-            
-        else:
-            pass
-    
-    def newInventoryAdd(self, barcode, qty,*args):
-        qty = qty.text.strip()
-        try: qtyValue = float(qty)
-        except: qtyValue = None
-        if qtyValue is not None and qtyValue > 0 :
-            inv.increaseQuantity(barcode, int(qtyValue))
-            if self.dialog:
-                self.remove_widget(self.dialog)
-                self.dialog = None
-            self.dialog = MDDialog( title="!! Inventory successfully Added  !!", )
-            self.dialog.open()
-        else:
-            if self.dialog:
-                self.remove_widget(self.dialog)
-                self.dialog = None
-            self.dialog = MDDialog( title="!! ERROR !!" )
-            self.dialog.open()
-        self.newInventory()
 
     # New Product Code
     def newProduct(self, *args):
@@ -186,9 +125,9 @@ class InventoryScreen(MDScreen):
         stack = MDGridLayout(size_hint=(1,None),cols = 2, adaptive_height= True,row_force_default =True,row_default_height=Window.height/11,
                     col_force_default =True,col_default_width=Window.width/3.5,padding = [100,70,50,0],spacing=[20,20])
         stack.bind(minimum_height=stack.setter('height'))
-        columns = ["Barcode","Name","Department Category","Purchase Price","Selling Price","Quantity","Tax Category","Deposit Category"]
+        columns = ["Barcode","Name","Department Category","Purchase Price","Selling Price","Tax Category","Deposit Category"]
         columnData = {}
-        
+
         for i in columns:
             if i not in ["Department Category","Tax Category","Deposit Category"]:
                 stack.add_widget(MDLabel(text=f"[b]{i} : [/b]",font_size=fontsize['label'],markup=True,valign="center"))
@@ -285,16 +224,10 @@ class InventoryScreen(MDScreen):
                 title="!! Invalid Input, Selling Price !!\nMust be Number or Decimal value and greater than 0.0 ",
                 )
             self.dialog.open()
-        elif (not re.search(r"^\d+$",columnData['Quantity'].text.strip())) or int(columnData['Quantity'].text.strip()) < 0   :
-            if self.dialog: self.remove_widget(self.dialog)
-            self.dialog = MDDialog(
-                title="!! Invalid Input, Quantity !!\nMust be Number value and greater than 0 ",
-                )
-            self.dialog.open()
         else:
-            inv.addData( columnData["Name"].text.strip(),columnData["Barcode"].text.strip(), 
+            inv.addData( columnData["Name"].text.strip(),columnData["Barcode"].text.strip(),
                 columnData["Department Category"].text.strip().split("\n")[0], columnData["Purchase Price"].text.strip(),
-                columnData["Selling Price"].text.strip(), columnData["Quantity"].text.strip(), 
+                columnData["Selling Price"].text.strip(),
                 columnData["Tax Category"].text.strip().split("\n")[0], columnData["Deposit Category"].text.strip().split("\n")[0]  )
             if self.dialog: self.remove_widget(self.dialog)
             self.dialog = MDDialog(
@@ -345,7 +278,13 @@ class InventoryScreen(MDScreen):
             stack.add_widget(MDLabel(text="",font_size=fontsize['label'],markup=True,valign="center"))
                     
             for i,j in zip(columns,inv.getItemFromBarcode(self.barcode.text.strip())):
-                if i == "Barcode":
+                # Barcode can't be changed from here, and Quantity (stock
+                # on hand) is no longer tracked - getItemFromBarcode()'s
+                # row still has a qty value at this position (the DB column
+                # wasn't dropped, just stopped being used anywhere), so it
+                # has to stay in `columns` to keep every later field lined
+                # up with the right value; it's just never rendered.
+                if i in ("Barcode","Quantity"):
                     continue
                 stack.add_widget(MDLabel(text=f"[b]{i} : [/b]",font_size=fontsize['label'],markup=True,valign="center"))
                 suffix = " AED" if i in ("Purchase Price","Selling Price") else ""
@@ -426,7 +365,6 @@ class InventoryScreen(MDScreen):
         elif col == "Department Category": inv.updateDepartment(barcode,value.split("\n")[0]),
         elif col == "Purchase Price": inv.updatePurchasePrice(barcode,value) ,
         elif col == "Selling Price": inv.updateSellPrice(barcode,value),
-        elif col == "Quantity": inv.updateQuantity(barcode,value),
         elif col == "Tax Category": inv.updateTax(barcode,value.split("\n")[0]),
         elif col == "Deposit Category": inv.updateDeposit(barcode,value.split("\n")[0]),
         
@@ -552,9 +490,15 @@ class InventoryScreen(MDScreen):
         self.layout.add_widget(self.sv)
     
     def productDisplay(self,plist):
+        # Quantity (stock on hand) stays in this list to keep every later
+        # field lined up with plist's actual DB-row order - the column
+        # itself still exists, just unused - but is skipped below so it's
+        # never shown.
         columns = ["Name","Barcode","Department","Purchase Price","Selling Price","Quantity","Tax Category","Deposit Category"]
         layout = MDGridLayout(cols = 2, adaptive_height= True,row_force_default =True,row_default_height=100,padding=[80,25,5,35])
         for i in zip(columns,plist):
+            if i[0] == "Quantity":
+                continue
             layout.add_widget(MDLabel(text = f"[b]{i[0]} : [/b]",markup=True))
             suffix = " AED" if i[0] in ("Purchase Price","Selling Price") else ""
             layout.add_widget(MDLabel(text = f"{i[1]}{suffix}"))

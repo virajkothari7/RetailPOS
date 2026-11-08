@@ -24,8 +24,14 @@ c.execute("""CREATE TABLE IF NOT EXISTS items (
 
 
 # adding items into the database
-def addData(item_name, barcode_number, department, purchase_price, sales_price, quantity,  tax,deposit):
-    params = (item_name, barcode_number, department, purchase_price, sales_price, quantity, tax,deposit)
+# Stock-on-hand quantity tracking was removed entirely (New Product no
+# longer asks for it, nothing decrements/increments it, no screen shows
+# it) - the qty column itself is left in the table rather than migrated
+# out, since SQLite's column-drop support is version-dependent and this
+# avoids rewriting every positional row-unpack elsewhere in the app that
+# still expects a value at this position. It's always stored as 0.
+def addData(item_name, barcode_number, department, purchase_price, sales_price, tax,deposit):
+    params = (item_name, barcode_number, department, purchase_price, sales_price, 0, tax,deposit)
     try:
         c.execute("INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
         conn.commit()
@@ -118,14 +124,6 @@ def updateSellPrice(barcode_number,new_sp ):
     except Exception:
         pass
 
-def updateQuantity(barcode_number, new_qtn):
-    params = (new_qtn, barcode_number)
-    try:
-        c.execute("UPDATE items SET qty = (?) WHERE barcode = (?)", params)
-        conn.commit()
-    except Exception:
-        pass
-
 def updateDepartment(barcode_number, new_value):
     params = (new_value, barcode_number)
     try:
@@ -196,16 +194,6 @@ def getPPFromBarcode(barcode_number):
     except Exception:
         pass
 
-def getQtyFromBarcode(barcode_number):
-    param = (barcode_number,)
-    try:
-        pp = c.execute("SELECT qty FROM items WHERE barcode = (?)", param)
-        final_qtn = pp.fetchone()
-        return str(final_qtn[0])
-    except Exception:
-        pass
-
-
 
 
 # Fetching all items that belong to a given department (category_id, e.g.
@@ -233,35 +221,6 @@ def getItemsFromName(name):
         pass
 
 
-
-# adding a function that will decrement quantity of an item as it is transacted
-def increaseQuantity(barcode_number, addQty ):
-    try:
-        originalQtn = getQtyFromBarcode(barcode_number)
-        newQtn = int(originalQtn) + int(addQty)
-        params = (newQtn, barcode_number)
-        try:
-            c.execute("UPDATE items SET qty = (?) WHERE barcode = (?)", params)
-            conn.commit()
-        except Exception:
-            pass
-    except TypeError:
-        pass
-
-
-# adding a function that will decrement quantity of an item as it is transacted
-def decreaseQuantity(barcode_number, delQty = 1):
-    try:
-        originalQtn = getQtyFromBarcode(barcode_number)
-        newQtn = int(originalQtn) - int(delQty)
-        params = (newQtn, barcode_number)
-        try:
-            c.execute("UPDATE items SET qty = (?) WHERE barcode = (?)", params)
-            conn.commit()
-        except Exception:
-            pass
-    except TypeError:
-        pass
 
 
 
